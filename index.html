@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Sistema de Reserva - Faculdade Santo Agostinho</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header>
+    <h1>Sistema de Reserva</h1>
+    <button onclick="resetarSistema()">Resetar Sistema</button>
+  </header>
+
+  <!-- Abas principais -->
+  <nav class="tabs">
+    <div class="tab active" data-aba="pessoas">Pessoas</div>
+    <div class="tab" data-aba="equipamentos">Equipamentos</div>
+    <div class="tab" data-aba="emprestimos">Empréstimos</div>
+    <div class="tab" data-aba="remocoes">Remoções</div>
+    <div class="tab" data-aba="relatorios">Relatórios</div>
+  </nav>
+
+  <main class="container">
+
+    <!-- Pessoas -->
+    <section id="pessoas" class="tab-content active">
+      <h2>Registrar Pessoa</h2>
+
+      <div class="form-row">
+        <input id="nome" placeholder="Nome"/>
+        <input id="telefone" placeholder="Telefone"/>
+        <input id="curso" placeholder="Curso"/>
+        <select id="funcao">
+          <option value="">Selecione Função</option>
+          <option value="Aluno">Aluno</option>
+          <option value="Professor">Professor</option>
+          <option value="Colaborador">Colaborador</option>
+        </select>
+      </div>
+      <button id="btnRegistrarPessoa">Registrar</button>
+
+      <h3>Lista de Pessoas</h3>
+
+      <!-- Filtros por tipo -->
+      <div class="tabs" style="margin-bottom:10px;">
+        <div class="tab active" onclick="mostrarPessoasPorTipo('Aluno', this)">Alunos</div>
+        <div class="tab" onclick="mostrarPessoasPorTipo('Professor', this)">Professores</div>
+        <div class="tab" onclick="mostrarPessoasPorTipo('Colaborador', this)">Colaboradores</div>
+      </div>
+
+      <table id="tabelaPessoas">
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Telefone</th>
+            <th>Curso</th>
+            <th>Função</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+    <!-- Equipamentos -->
+    <section id="equipamentos" class="tab-content">
+      <h2>Registrar Equipamento</h2>
+
+      <div class="form-row">
+        <input id="nomeEquipamento" placeholder="Nome do Equipamento"/>
+        <input id="patrimonio" placeholder="Número do Patrimônio"/>
+        <input id="quantidade" type="number" min="1" placeholder="Quantidade"/>
+      </div>
+      <button id="btnRegistrarEquip">Registrar</button>
+
+      <h3>Lista de Equipamentos</h3>
+      <table id="tabelaEquipamentos">
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Patrimônio</th>
+            <th>Quantidade</th>
+            <th>Status</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+    <!-- Empréstimos -->
+    <section id="emprestimos" class="tab-content">
+      <h2>Registrar Empréstimo</h2>
+
+      <div class="form-row inline">
+        <select id="alunoEmprestimo">
+          <option value="">Selecione a Pessoa</option>
+        </select>
+
+        <select id="equipEmprestimo">
+          <option value="">Selecione o Equipamento</option>
+        </select>
+
+        <button id="btnEmprestar">Emprestar</button>
+      </div>
+
+      <h3>Registrar Devolução</h3>
+      <div class="form-row">
+        <select id="devolucaoSelect">
+          <option value="">Selecione o Empréstimo</option>
+        </select>
+
+        <select id="statusDevolucao">
+          <option value="Funcionando">Funcionando</option>
+          <option value="Danificado">Danificado</option>
+        </select>
+
+        <input id="notaDevolucao" placeholder="Observações"/>
+        <button id="btnDevolver">Devolver</button>
+      </div>
+
+      <h3>Histórico de Empréstimos</h3>
+
+      <!-- Filtro por tipo -->
+      <div class="tabs" style="margin:10px 0;">
+        <div class="tab active" onclick="mostrarEmprestimos('Aluno', this)">Alunos</div>
+        <div class="tab" onclick="mostrarEmprestimos('Professor', this)">Professores</div>
+        <div class="tab" onclick="mostrarEmprestimos('Colaborador', this)">Colaboradores</div>
+      </div>
+
+      <table id="tabelaEmprestimos">
+        <thead>
+          <tr>
+            <th>Equipamento</th>
+            <th>Nome</th>
+            <th>Curso</th>
+            <th>Função</th>
+            <th>Status</th>
+            <th>Observação</th>
+            <th>Data Empréstimo</th>
+            <th>Data Devolução</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+    <!-- Remoções -->
+    <section id="remocoes" class="tab-content">
+      <h2>Histórico de Remoções</h2>
+
+      <table id="tabelaRemocoes">
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Tipo</th>
+            <th>Patrimônio</th>
+            <th>Justificativa</th>
+            <th>Data</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+    <!-- Relatórios -->
+    <section id="relatorios" class="tab-content">
+      <h2>Relatórios</h2>
+
+      <div class="form-row inline">
+        <label>De:</label>
+        <input type="date" id="relDataInicio">
+
+        <label>Até:</label>
+        <input type="date" id="relDataFim">
+
+        <button id="btnGerarRel">Gerar</button>
+        <button id="btnImprimirRel">Imprimir</button>
+      </div>
+
+      <div id="resumoRelatorio"></div>
+      <div id="listaRelatorio" class="relatorio-box"></div>
+    </section>
+
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
