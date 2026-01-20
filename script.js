@@ -170,6 +170,12 @@ const tabelaEquipamentos = document.querySelector('#tabelaEquipamentos tbody');
 const tabelaEmprestimos = document.querySelector('#tabelaEmprestimos tbody');
 const tabelaDanificados = document.querySelector('#tabelaDanificados tbody');
 const tabelaRemocoes = document.querySelector('#tabelaRemocoes tbody');
+const searchPessoas = document.getElementById('searchPessoas');
+const searchEquipamentos = document.getElementById('searchEquipamentos');
+const searchEmprestimos = document.getElementById('searchEmprestimos');
+const searchDanificados = document.getElementById('searchDanificados');
+const searchRemocoes = document.getElementById('searchRemocoes');
+const searchUsuarios = document.getElementById('searchUsuarios');
 
 const btnGerarRel = document.getElementById('btnGerarRel');
 const btnImprimirRel = document.getElementById('btnImprimirRel');
@@ -210,6 +216,46 @@ function aplicarPermissoes(){
 // ---------- Filtros ----------
 let filtroPessoa = 'Aluno';
 let filtroEmprestimo = 'Aluno';
+
+// Pesquisa (em todas as colunas/campos)
+const pesquisa = {
+  pessoas: '',
+  equipamentos: '',
+  emprestimos: '',
+  danificados: '',
+  remocoes: '',
+  usuarios: ''
+};
+
+function norm(v){
+  return (v ?? '').toString().toLowerCase().trim();
+}
+
+function matchAllFields(obj, termo){
+  const t = norm(termo);
+  if (!t) return true;
+  // inclui também chaves calculadas se existirem
+  const vals = [];
+  try{ vals.push(...Object.values(obj)); }catch{}
+  return vals.some(v => norm(v).includes(t));
+}
+
+function limparPesquisa(aba){
+  if (!pesquisa.hasOwnProperty(aba)) return;
+  pesquisa[aba] = '';
+  const map = {
+    pessoas: searchPessoas,
+    equipamentos: searchEquipamentos,
+    emprestimos: searchEmprestimos,
+    danificados: searchDanificados,
+    remocoes: searchRemocoes,
+    usuarios: searchUsuarios
+  };
+  if (map[aba]) map[aba].value = '';
+  atualizarTudo();
+}
+
+window.limparPesquisa = limparPesquisa;
 
 // Foto (opcional) capturada na devolução
 let fotoDevolucaoDataUrl = null;
@@ -334,6 +380,7 @@ function atualizarPessoas(){
   tabelaPessoas.innerHTML = '';
   dados.pessoas
     .filter(p => p.funcao === filtroPessoa)
+    .filter(p => matchAllFields(p, pesquisa.pessoas))
     .forEach(p => {
       const tr = document.createElement('tr');
 
@@ -355,7 +402,9 @@ function atualizarPessoas(){
 
 function atualizarEquipamentos(){
   tabelaEquipamentos.innerHTML = '';
-  dados.equipamentos.forEach(e => {
+  dados.equipamentos
+    .filter(e => matchAllFields(e, pesquisa.equipamentos))
+    .forEach(e => {
     const tr = document.createElement('tr');
 
     const total = Number(e.total ?? 0);
@@ -391,6 +440,7 @@ function atualizarEmprestimos(){
   tabelaEmprestimos.innerHTML = '';
   dados.emprestimos
     .filter(e => e.funcao === filtroEmprestimo)
+    .filter(e => matchAllFields(e, pesquisa.emprestimos))
     .sort((a,b) => (b.dataEmprestimo || '').localeCompare(a.dataEmprestimo || ''))
     .forEach(emp => {
       const tr = document.createElement('tr');
@@ -426,6 +476,7 @@ function atualizarDanificados(){
   (dados.danificados || [])
     .slice()
     .sort((a,b) => (b.data || '').localeCompare(a.data || ''))
+    .filter(d => matchAllFields(d, pesquisa.danificados))
     .forEach(d => {
       const tr = document.createElement('tr');
 
@@ -460,7 +511,11 @@ function atualizarDanificados(){
 function atualizarRemocoes(){
   if (!tabelaRemocoes) return;
   tabelaRemocoes.innerHTML = '';
-  (dados.remocoes || []).slice().reverse().forEach(r => {
+  (dados.remocoes || [])
+    .slice()
+    .reverse()
+    .filter(r => matchAllFields(r, pesquisa.remocoes))
+    .forEach(r => {
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td data-label="Nome">${esc(r.nome || '-')}</td>
@@ -505,7 +560,9 @@ function atualizarUsuarios(){
   if (!tabelaUsuarios) return;
   tabelaUsuarios.innerHTML = '';
 
-  usuariosSistema.forEach(u => {
+  usuariosSistema
+    .filter(u => matchAllFields(u, pesquisa.usuarios))
+    .forEach(u => {
     const tr = document.createElement('tr');
     const cargo = (u.role === 'admin') ? 'Admin' : 'Funcionário';
 
@@ -1372,7 +1429,7 @@ function resetarSistema(){
   if (!isAdmin()) return alert('Apenas ADM pode resetar.');
   if (!confirm('Tem certeza? Isso apaga Pessoas, Equipamentos, Empréstimos e Remoções.')) return;
 
-  dados = { pessoas: [], equipamentos: [], emprestimos: [], remocoes: [] };
+  dados = { pessoas: [], equipamentos: [], emprestimos: [], danificados: [], remocoes: [] };
   salvar();
   atualizarTudo();
 }
@@ -1392,6 +1449,28 @@ if (btnResetSistemaAdmin){
   aplicarPermissoes();
 
   atualizarTudo();
+
+  // Pesquisa por aba (em todos os campos)
+  const bindSearch = (el, key) => {
+    if (!el) return;
+    el.addEventListener('input', () => {
+      pesquisa[key] = el.value || '';
+      // atualiza apenas a tabela necessária
+      if (key === 'pessoas') return atualizarPessoas();
+      if (key === 'equipamentos') return atualizarEquipamentos();
+      if (key === 'emprestimos') return atualizarEmprestimos();
+      if (key === 'danificados') return atualizarDanificados();
+      if (key === 'remocoes') return atualizarRemocoes();
+      if (key === 'usuarios') return atualizarUsuarios();
+    });
+  };
+
+  bindSearch(searchPessoas, 'pessoas');
+  bindSearch(searchEquipamentos, 'equipamentos');
+  bindSearch(searchEmprestimos, 'emprestimos');
+  bindSearch(searchDanificados, 'danificados');
+  bindSearch(searchRemocoes, 'remocoes');
+  bindSearch(searchUsuarios, 'usuarios');
 
   // cada devolução começa "limpa" (sem reaproveitar foto anterior)
   if (devolucaoSelect){

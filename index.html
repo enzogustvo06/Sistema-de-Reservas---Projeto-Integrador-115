@@ -102,6 +102,11 @@
           </div>
         </div>
 
+        <div class="filter-row">
+          <input id="searchPessoas" class="search-input" placeholder="Pesquisar pessoas (nome, telefone, curso, etc.)" />
+          <button class="btn btn-ghost btn-sm" type="button" onclick="limparPesquisa('pessoas')">Limpar</button>
+        </div>
+
         <div class="table-wrap">
           <table id="tabelaPessoas">
             <thead>
@@ -151,6 +156,12 @@
 
       <div class="card">
         <h3>Lista de Equipamentos</h3>
+
+        <div class="filter-row">
+          <input id="searchEquipamentos" class="search-input" placeholder="Pesquisar equipamentos (nome, patrimônio, status, etc.)" />
+          <button class="btn btn-ghost btn-sm" type="button" onclick="limparPesquisa('equipamentos')">Limpar</button>
+        </div>
+
         <div class="table-wrap">
           <table id="tabelaEquipamentos">
             <thead>
@@ -250,6 +261,11 @@
           </div>
         </div>
 
+        <div class="filter-row">
+          <input id="searchEmprestimos" class="search-input" placeholder="Pesquisar no histórico (pessoa, patrimônio, datas, status, observação, etc.)" />
+          <button class="btn btn-ghost btn-sm" type="button" onclick="limparPesquisa('emprestimos')">Limpar</button>
+        </div>
+
         <div class="table-wrap">
           <table id="tabelaEmprestimos">
             <thead>
@@ -284,6 +300,12 @@
 
       <div class="card">
         <h3>Lista de Danificados</h3>
+
+        <div class="filter-row">
+          <input id="searchDanificados" class="search-input" placeholder="Pesquisar danificados (equipamento, patrimônio, pessoa, observação, etc.)" />
+          <button class="btn btn-ghost btn-sm" type="button" onclick="limparPesquisa('danificados')">Limpar</button>
+        </div>
+
         <div class="table-wrap">
           <table id="tabelaDanificados">
             <thead>
@@ -312,12 +334,18 @@
       <div class="section-header">
         <div>
           <h2>Remoções</h2>
-          <p class="muted">Visível apenas para ADM.</p>
+          <p class="muted">Histórico de baixas/remoções (visível para ADM e Funcionários).</p>
         </div>
       </div>
 
       <div class="card">
         <h3>Histórico de Remoções</h3>
+
+        <div class="filter-row">
+          <input id="searchRemocoes" class="search-input" placeholder="Pesquisar remoções (nome, patrimônio, justificativa, data, responsável, etc.)" />
+          <button class="btn btn-ghost btn-sm" type="button" onclick="limparPesquisa('remocoes')">Limpar</button>
+        </div>
+
         <div class="table-wrap">
           <table id="tabelaRemocoes">
             <thead>
@@ -402,6 +430,12 @@
 
       <div class="card">
         <h3>Lista de Usuários</h3>
+
+        <div class="filter-row">
+          <input id="searchUsuarios" class="search-input" placeholder="Pesquisar usuários (usuário, cargo)" />
+          <button class="btn btn-ghost btn-sm" type="button" onclick="limparPesquisa('usuarios')">Limpar</button>
+        </div>
+
         <div class="table-wrap">
           <table id="tabelaUsuarios">
             <thead>

@@ -88,6 +88,21 @@ header h1{ margin:0; font-size:18px; line-height:1.1; }
 
 .between{ display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; }
 
+/* Barra de pesquisa / filtros simples */
+.filter-row{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  margin-top:10px;
+}
+
+.search-input{
+  flex:1;
+  min-width:240px;
+}
+
 h2{ margin:0; font-size:18px; }
 h3{ margin:0 0 12px; font-size:15px; }
 
@@ -148,8 +163,14 @@ input:focus, select:focus, textarea:focus{
 
 .actions{ display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end; margin-top:10px; }
 
+/* Espaçamento padronizado entre elementos dentro do card */
+.card h3{ margin:0 0 10px; }
+.table-wrap{ margin-top:10px; }
+
 /* ações dentro de tabelas */
 .td-actions{ display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+
+.td-actions .btn{ white-space:nowrap; }
 
 /* BUTTONS */
 .btn{
@@ -178,7 +199,7 @@ input:focus, select:focus, textarea:focus{
 .btn-sm{ padding:7px 10px; border-radius:9px; font-size:13px; }
 
 /* TABLES */
-.table-wrap{ width:100%; overflow:auto; border-radius:12px; border:1px solid var(--border); }
+.table-wrap{ width:100%; overflow:auto; border-radius:12px; border:1px solid var(--border); margin-top:10px; }
 
 table{ width:100%; border-collapse:collapse; min-width:720px; background:#fff; }
 
@@ -310,6 +331,13 @@ table tr:nth-child(even){ background:#fafbff; }
   .card{ padding:12px; }
   .actions{ justify-content:stretch; }
   .actions .btn{ flex:1; }
+
+  .filter-row{ gap:8px; }
+  .filter-row .search-input{ min-width:0; width:100%; }
+  .filter-row .btn{ width:100%; }
+
+  .td-actions{ gap:8px; }
+  .td-actions .btn{ flex:1; }
   input, select, textarea{ padding:11px 10px; }
 
   /* tabelas viram "cards" no celular (usa data-label nos <td>)
