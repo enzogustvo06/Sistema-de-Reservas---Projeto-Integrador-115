@@ -88,19 +88,6 @@ header h1{ margin:0; font-size:18px; line-height:1.1; }
 
 .between{ display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; }
 
-/* BUSCA / FILTROS */
-.search-row{
-  display:flex;
-  gap:10px;
-  align-items:center;
-  flex-wrap:wrap;
-  margin:10px 0 12px;
-}
-.search-row input{
-  flex:1;
-  min-width: 240px;
-}
-
 h2{ margin:0; font-size:18px; }
 h3{ margin:0 0 12px; font-size:15px; }
 
@@ -319,12 +306,22 @@ table tr:nth-child(even){ background:#fafbff; }
   /* mostra captura/preview de foto em mobile */
   .mobile-photo{ display:block; }
 
-  /* tabela vira "cards" no celular (usa data-label nos <td>) */
-  .table-wrap{ border:none; }
-  table{ min-width:0; }
-  table thead{ display:none; }
-  table, tbody, tr, td{ display:block; width:100%; }
-  tbody tr{
+  /* espaçamento mais organizado no mobile */
+  .card{ padding:12px; }
+  .actions{ justify-content:stretch; }
+  .actions .btn{ flex:1; }
+  input, select, textarea{ padding:11px 10px; }
+
+  /* tabelas viram "cards" no celular (usa data-label nos <td>)
+     exceto quando a tabela estiver marcada com .no-mobile-cards (ex.: relatório) */
+  .table-wrap:not(.no-mobile-cards){ border:none; }
+  .table-wrap:not(.no-mobile-cards) table{ min-width:0; }
+  .table-wrap:not(.no-mobile-cards) table thead{ display:none; }
+  .table-wrap:not(.no-mobile-cards) table,
+  .table-wrap:not(.no-mobile-cards) tbody,
+  .table-wrap:not(.no-mobile-cards) tr,
+  .table-wrap:not(.no-mobile-cards) td{ display:block; width:100%; }
+  .table-wrap:not(.no-mobile-cards) tbody tr{
     background:#fff;
     border:1px solid var(--border);
     border-radius:14px;
@@ -332,16 +329,15 @@ table tr:nth-child(even){ background:#fafbff; }
     margin-bottom:10px;
     box-shadow: var(--shadow);
   }
-  tbody td{
+  .table-wrap:not(.no-mobile-cards) tbody td{
     border:none;
     padding:8px 4px;
     display:flex;
     justify-content:space-between;
     gap:10px;
     align-items:flex-start;
-    word-break:break-word;
   }
-  tbody td::before{
+  .table-wrap:not(.no-mobile-cards) tbody td::before{
     content: attr(data-label);
     color: var(--muted);
     font-size:12px;
@@ -352,43 +348,24 @@ table tr:nth-child(even){ background:#fafbff; }
   }
   .td-actions{ justify-content:flex-end; }
 
-  .search-row{ flex-direction:column; align-items:stretch; }
-  .search-row input{ min-width:0; }
-
-  /* Em relatórios, mantenha tabela normal (não virar cards) */
-  .no-mobile-cards table{ display:table !important; width:100% !important; }
-  .no-mobile-cards thead{ display:table-header-group !important; }
-  .no-mobile-cards tbody{ display:table-row-group !important; }
-  .no-mobile-cards tr{ display:table-row !important; }
-  .no-mobile-cards td, .no-mobile-cards th{ display:table-cell !important; }
-  .no-mobile-cards tbody td::before{ content:none !important; }
-  .no-mobile-cards .table-wrap{ border:1px solid var(--border); }
-
   /* modal ocupa mais a tela */
   .modal-card{ margin:4vh auto 0; width:min(96vw, 720px); }
 }
 
 @media print{
-  @page{ margin: 12mm; }
   body{ background:#fff; }
 
-  /* imprime somente o conteúdo do relatório */
-  body *{ visibility:hidden !important; }
-  #listaRelatorio, #listaRelatorio *{ visibility:visible !important; }
-  #listaRelatorio{
-    position:absolute;
-    left:0;
-    top:0;
-    width:100%;
-    overflow:visible !important;
-    background:#fff;
-  }
+  /* modo de impressão: imprime apenas o relatório */
+  body.print-mode *{ visibility:hidden; }
+  body.print-mode #relatorioCard,
+  body.print-mode #relatorioCard *{ visibility:visible; }
+  body.print-mode #relatorioCard{ position:absolute; left:0; top:0; width:100%; }
 
-  /* tabelas no print: sem cortes */
-  #listaRelatorio .table-wrap{ overflow:visible !important; border:none !important; }
-  #listaRelatorio table{ width:100% !important; min-width:0 !important; table-layout:fixed; }
-  #listaRelatorio th, #listaRelatorio td{ padding:6px !important; font-size:10px !important; word-break:break-word; }
-  #listaRelatorio th{ position:static !important; }
-  #listaRelatorio thead{ display:table-header-group; }
-  #listaRelatorio tr{ break-inside:avoid; page-break-inside:avoid; }
+  #relatorioCard h2{ margin:0 0 6px; }
+  #relatorioCard .muted{ margin:0 0 10px; }
+
+  /* tabela do relatório bem compacta e sem cortes */
+  #relatorioCard table{ width:100% !important; min-width:0 !important; font-size:11px; }
+  #relatorioCard th, #relatorioCard td{ padding:6px; word-break:break-word; }
+  #relatorioCard tr{ page-break-inside:avoid; }
 }

@@ -171,25 +171,6 @@ const tabelaEmprestimos = document.querySelector('#tabelaEmprestimos tbody');
 const tabelaDanificados = document.querySelector('#tabelaDanificados tbody');
 const tabelaRemocoes = document.querySelector('#tabelaRemocoes tbody');
 
-// ---------- Filtros de busca (texto) ----------
-const filtroPessoasInput = document.getElementById('filtroPessoas');
-const limparFiltroPessoas = document.getElementById('limparFiltroPessoas');
-
-const filtroEquipamentosInput = document.getElementById('filtroEquipamentos');
-const limparFiltroEquipamentos = document.getElementById('limparFiltroEquipamentos');
-
-const filtroEmprestimosInput = document.getElementById('filtroEmprestimos');
-const limparFiltroEmprestimos = document.getElementById('limparFiltroEmprestimos');
-
-const filtroDanificadosInput = document.getElementById('filtroDanificados');
-const limparFiltroDanificados = document.getElementById('limparFiltroDanificados');
-
-const filtroRemocoesInput = document.getElementById('filtroRemocoes');
-const limparFiltroRemocoes = document.getElementById('limparFiltroRemocoes');
-
-const filtroUsuariosInput = document.getElementById('filtroUsuarios');
-const limparFiltroUsuarios = document.getElementById('limparFiltroUsuarios');
-
 const btnGerarRel = document.getElementById('btnGerarRel');
 const btnImprimirRel = document.getElementById('btnImprimirRel');
 const listaRelatorio = document.getElementById('listaRelatorio');
@@ -222,7 +203,6 @@ document.querySelectorAll('.tab').forEach(t => {
 function aplicarPermissoes(){
   if (!isAdmin()){
     if (tabUsuarios) tabUsuarios.style.display = 'none';
-    if (tabRemocoes) tabRemocoes.style.display = 'none';
     if (btnResetSistemaHeader) btnResetSistemaHeader.style.display = 'none';
   }
 }
@@ -230,48 +210,6 @@ function aplicarPermissoes(){
 // ---------- Filtros ----------
 let filtroPessoa = 'Aluno';
 let filtroEmprestimo = 'Aluno';
-
-// Termos de busca (pesquisa em todos os campos visíveis/úteis)
-let termoPessoas = '';
-let termoEquipamentos = '';
-let termoEmprestimos = '';
-let termoDanificados = '';
-let termoRemocoes = '';
-let termoUsuarios = '';
-
-function normTxt(v){
-  return String(v ?? '')
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '');
-}
-
-function incluiTermo(termo, campos){
-  const t = normTxt(termo).trim();
-  if (!t) return true;
-  const hay = normTxt(campos.filter(Boolean).join(' | '));
-  return hay.includes(t);
-}
-
-function bindBusca(inputEl, limparBtnEl, onChange){
-  if (inputEl){
-    inputEl.addEventListener('input', () => onChange(String(inputEl.value || '')));
-  }
-  if (limparBtnEl){
-    limparBtnEl.addEventListener('click', () => {
-      if (inputEl) inputEl.value = '';
-      onChange('');
-    });
-  }
-}
-
-// liga os inputs às tabelas (sem mexer no layout)
-bindBusca(filtroPessoasInput, limparFiltroPessoas, (v) => { termoPessoas = v; atualizarPessoas(); });
-bindBusca(filtroEquipamentosInput, limparFiltroEquipamentos, (v) => { termoEquipamentos = v; atualizarEquipamentos(); });
-bindBusca(filtroEmprestimosInput, limparFiltroEmprestimos, (v) => { termoEmprestimos = v; atualizarEmprestimos(); });
-bindBusca(filtroDanificadosInput, limparFiltroDanificados, (v) => { termoDanificados = v; atualizarDanificados(); });
-bindBusca(filtroRemocoesInput, limparFiltroRemocoes, (v) => { termoRemocoes = v; atualizarRemocoes(); });
-bindBusca(filtroUsuariosInput, limparFiltroUsuarios, (v) => { termoUsuarios = v; atualizarUsuarios(); });
 
 // Foto (opcional) capturada na devolução
 let fotoDevolucaoDataUrl = null;
@@ -396,7 +334,6 @@ function atualizarPessoas(){
   tabelaPessoas.innerHTML = '';
   dados.pessoas
     .filter(p => p.funcao === filtroPessoa)
-    .filter(p => incluiTermo(termoPessoas, [p.nome, p.telefone, p.curso, p.funcao]))
     .forEach(p => {
       const tr = document.createElement('tr');
 
@@ -418,9 +355,7 @@ function atualizarPessoas(){
 
 function atualizarEquipamentos(){
   tabelaEquipamentos.innerHTML = '';
-  dados.equipamentos
-    .filter(e => incluiTermo(termoEquipamentos, [e.nome, e.patrimonio, e.total, e.disponivel, e.danificados]))
-    .forEach(e => {
+  dados.equipamentos.forEach(e => {
     const tr = document.createElement('tr');
 
     const total = Number(e.total ?? 0);
@@ -456,10 +391,6 @@ function atualizarEmprestimos(){
   tabelaEmprestimos.innerHTML = '';
   dados.emprestimos
     .filter(e => e.funcao === filtroEmprestimo)
-    .filter(e => incluiTermo(termoEmprestimos, [
-      e.equipamentoNome, e.alunoNome, e.curso, e.funcao, e.status, e.nota, e.fezEmprestimo, e.fezDevolucao,
-      fmtData(e.dataEmprestimo), e.dataDevolucao ? fmtData(e.dataDevolucao) : ''
-    ]))
     .sort((a,b) => (b.dataEmprestimo || '').localeCompare(a.dataEmprestimo || ''))
     .forEach(emp => {
       const tr = document.createElement('tr');
@@ -494,7 +425,6 @@ function atualizarDanificados(){
 
   (dados.danificados || [])
     .slice()
-    .filter(d => incluiTermo(termoDanificados, [d.equipamentoNome, d.patrimonio, d.pessoaNome, d.observacao, d.status, fmtData(d.data)]))
     .sort((a,b) => (b.data || '').localeCompare(a.data || ''))
     .forEach(d => {
       const tr = document.createElement('tr');
@@ -530,11 +460,7 @@ function atualizarDanificados(){
 function atualizarRemocoes(){
   if (!tabelaRemocoes) return;
   tabelaRemocoes.innerHTML = '';
-  (dados.remocoes || [])
-    .slice()
-    .reverse()
-    .filter(r => incluiTermo(termoRemocoes, [r.nome, r.tipo, r.patrimonio, r.justificativa, r.removidoPor, fmtData(r.data)]))
-    .forEach(r => {
+  (dados.remocoes || []).slice().reverse().forEach(r => {
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td data-label="Nome">${esc(r.nome || '-')}</td>
@@ -579,9 +505,7 @@ function atualizarUsuarios(){
   if (!tabelaUsuarios) return;
   tabelaUsuarios.innerHTML = '';
 
-  usuariosSistema
-    .filter(u => incluiTermo(termoUsuarios, [u.usuario, u.role]))
-    .forEach(u => {
+  usuariosSistema.forEach(u => {
     const tr = document.createElement('tr');
     const cargo = (u.role === 'admin') ? 'Admin' : 'Funcionário';
 
@@ -1319,10 +1243,11 @@ btnGerarRel.onclick = () => {
   });
 
   let html = `
-    <h2>Relatório de Empréstimos</h2>
-    <p class="muted">${ini ? ('De: ' + ini) : ''} ${fim ? (' Até: ' + fim) : ''}</p>
-    <div class="table-wrap no-mobile-cards">
-    <table>
+    <div id="relatorioCard">
+      <h2>Relatório de Empréstimos</h2>
+      <p class="muted">${ini ? ('De: ' + ini) : ''} ${fim ? (' Até: ' + fim) : ''}</p>
+      <div class="table-wrap no-mobile-cards">
+      <table>
       <thead>
         <tr>
           <th>Equipamento</th>
@@ -1355,11 +1280,17 @@ btnGerarRel.onclick = () => {
     `;
   });
 
-  html += `</tbody></table></div>`;
+  html += `</tbody></table></div></div>`;
   listaRelatorio.innerHTML = html;
 };
 
-btnImprimirRel.onclick = () => window.print();
+// Imprime apenas o relatório (não muda layout da tela, só modo de impressão)
+btnImprimirRel.onclick = () => {
+  document.body.classList.add('print-mode');
+  window.print();
+  // remove depois para voltar ao normal
+  setTimeout(() => document.body.classList.remove('print-mode'), 250);
+};
 
 // ---------- Usuários (ADM) ----------
 function criarUsuario(usuario, senha, role){
