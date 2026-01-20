@@ -29,6 +29,7 @@ let dados = JSON.parse(localStorage.getItem('faculdadeDados')) || {
   pessoas: [],
   equipamentos: [],
   emprestimos: [],
+  danificados: [],
   remocoes: []
 };
 
@@ -134,6 +135,9 @@ function migrarDados(){
     ...emp
   }));
 
+  // Danificados: garantir array
+  dados.danificados = Array.isArray(dados.danificados) ? dados.danificados : [];
+
   salvar();
 }
 
@@ -164,7 +168,27 @@ const btnRemoverFotoDevolucao = document.getElementById('btnRemoverFotoDevolucao
 const tabelaPessoas = document.querySelector('#tabelaPessoas tbody');
 const tabelaEquipamentos = document.querySelector('#tabelaEquipamentos tbody');
 const tabelaEmprestimos = document.querySelector('#tabelaEmprestimos tbody');
+const tabelaDanificados = document.querySelector('#tabelaDanificados tbody');
 const tabelaRemocoes = document.querySelector('#tabelaRemocoes tbody');
+
+// ---------- Filtros de busca (texto) ----------
+const filtroPessoasInput = document.getElementById('filtroPessoas');
+const limparFiltroPessoas = document.getElementById('limparFiltroPessoas');
+
+const filtroEquipamentosInput = document.getElementById('filtroEquipamentos');
+const limparFiltroEquipamentos = document.getElementById('limparFiltroEquipamentos');
+
+const filtroEmprestimosInput = document.getElementById('filtroEmprestimos');
+const limparFiltroEmprestimos = document.getElementById('limparFiltroEmprestimos');
+
+const filtroDanificadosInput = document.getElementById('filtroDanificados');
+const limparFiltroDanificados = document.getElementById('limparFiltroDanificados');
+
+const filtroRemocoesInput = document.getElementById('filtroRemocoes');
+const limparFiltroRemocoes = document.getElementById('limparFiltroRemocoes');
+
+const filtroUsuariosInput = document.getElementById('filtroUsuarios');
+const limparFiltroUsuarios = document.getElementById('limparFiltroUsuarios');
 
 const btnGerarRel = document.getElementById('btnGerarRel');
 const btnImprimirRel = document.getElementById('btnImprimirRel');
@@ -172,6 +196,7 @@ const listaRelatorio = document.getElementById('listaRelatorio');
 
 const tabUsuarios = document.getElementById('tabUsuarios');
 const tabRemocoes = document.getElementById('tabRemocoes');
+const tabDanificados = document.getElementById('tabDanificados');
 const btnResetSistemaHeader = document.getElementById('btnResetSistema');
 
 const novoUsuario = document.getElementById('novoUsuario');
@@ -205,6 +230,48 @@ function aplicarPermissoes(){
 // ---------- Filtros ----------
 let filtroPessoa = 'Aluno';
 let filtroEmprestimo = 'Aluno';
+
+// Termos de busca (pesquisa em todos os campos visíveis/úteis)
+let termoPessoas = '';
+let termoEquipamentos = '';
+let termoEmprestimos = '';
+let termoDanificados = '';
+let termoRemocoes = '';
+let termoUsuarios = '';
+
+function normTxt(v){
+  return String(v ?? '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
+function incluiTermo(termo, campos){
+  const t = normTxt(termo).trim();
+  if (!t) return true;
+  const hay = normTxt(campos.filter(Boolean).join(' | '));
+  return hay.includes(t);
+}
+
+function bindBusca(inputEl, limparBtnEl, onChange){
+  if (inputEl){
+    inputEl.addEventListener('input', () => onChange(String(inputEl.value || '')));
+  }
+  if (limparBtnEl){
+    limparBtnEl.addEventListener('click', () => {
+      if (inputEl) inputEl.value = '';
+      onChange('');
+    });
+  }
+}
+
+// liga os inputs às tabelas (sem mexer no layout)
+bindBusca(filtroPessoasInput, limparFiltroPessoas, (v) => { termoPessoas = v; atualizarPessoas(); });
+bindBusca(filtroEquipamentosInput, limparFiltroEquipamentos, (v) => { termoEquipamentos = v; atualizarEquipamentos(); });
+bindBusca(filtroEmprestimosInput, limparFiltroEmprestimos, (v) => { termoEmprestimos = v; atualizarEmprestimos(); });
+bindBusca(filtroDanificadosInput, limparFiltroDanificados, (v) => { termoDanificados = v; atualizarDanificados(); });
+bindBusca(filtroRemocoesInput, limparFiltroRemocoes, (v) => { termoRemocoes = v; atualizarRemocoes(); });
+bindBusca(filtroUsuariosInput, limparFiltroUsuarios, (v) => { termoUsuarios = v; atualizarUsuarios(); });
 
 // Foto (opcional) capturada na devolução
 let fotoDevolucaoDataUrl = null;
@@ -329,6 +396,7 @@ function atualizarPessoas(){
   tabelaPessoas.innerHTML = '';
   dados.pessoas
     .filter(p => p.funcao === filtroPessoa)
+    .filter(p => incluiTermo(termoPessoas, [p.nome, p.telefone, p.curso, p.funcao]))
     .forEach(p => {
       const tr = document.createElement('tr');
 
@@ -350,7 +418,9 @@ function atualizarPessoas(){
 
 function atualizarEquipamentos(){
   tabelaEquipamentos.innerHTML = '';
-  dados.equipamentos.forEach(e => {
+  dados.equipamentos
+    .filter(e => incluiTermo(termoEquipamentos, [e.nome, e.patrimonio, e.total, e.disponivel, e.danificados]))
+    .forEach(e => {
     const tr = document.createElement('tr');
 
     const total = Number(e.total ?? 0);
@@ -386,6 +456,10 @@ function atualizarEmprestimos(){
   tabelaEmprestimos.innerHTML = '';
   dados.emprestimos
     .filter(e => e.funcao === filtroEmprestimo)
+    .filter(e => incluiTermo(termoEmprestimos, [
+      e.equipamentoNome, e.alunoNome, e.curso, e.funcao, e.status, e.nota, e.fezEmprestimo, e.fezDevolucao,
+      fmtData(e.dataEmprestimo), e.dataDevolucao ? fmtData(e.dataDevolucao) : ''
+    ]))
     .sort((a,b) => (b.dataEmprestimo || '').localeCompare(a.dataEmprestimo || ''))
     .forEach(emp => {
       const tr = document.createElement('tr');
@@ -413,10 +487,54 @@ function atualizarEmprestimos(){
     });
 }
 
+// ---------- Danificados ----------
+function atualizarDanificados(){
+  if (!tabelaDanificados) return;
+  tabelaDanificados.innerHTML = '';
+
+  (dados.danificados || [])
+    .slice()
+    .filter(d => incluiTermo(termoDanificados, [d.equipamentoNome, d.patrimonio, d.pessoaNome, d.observacao, d.status, fmtData(d.data)]))
+    .sort((a,b) => (b.data || '').localeCompare(a.data || ''))
+    .forEach(d => {
+      const tr = document.createElement('tr');
+
+      const temFoto = !!d.foto;
+      const statusTxt = d.status || 'Danificado';
+
+      const btnFoto = temFoto
+        ? `<button class="btn btn-ghost btn-sm" onclick="verFotoDanificado('${d.id}')">Ver</button>`
+        : `<span class="muted">Sem</span>`;
+
+      // Ações de estoque: apenas ADM
+      const acoesAdmin = isAdmin()
+        ? `<button class="btn btn-ghost btn-sm" onclick="marcarConsertado('${d.id}')">Consertado</button>
+           <button class="btn btn-danger btn-sm" onclick="darBaixaDanificado('${d.id}')">Dar baixa</button>`
+        : `<span class="muted">—</span>`;
+
+      tr.innerHTML = `
+        <td data-label="Equipamento">${esc(d.equipamentoNome || '-')}</td>
+        <td data-label="Patrimônio">${esc(d.patrimonio || '-')}</td>
+        <td data-label="Pessoa">${esc(d.pessoaNome || '-')}</td>
+        <td data-label="Data">${fmtData(d.data)}</td>
+        <td data-label="Observação">${esc(d.observacao || '-')}</td>
+        <td data-label="Foto">${btnFoto}</td>
+        <td data-label="Status">${esc(statusTxt)}</td>
+        <td data-label="Ações"><div class="td-actions">${acoesAdmin}</div></td>
+      `;
+
+      tabelaDanificados.appendChild(tr);
+    });
+}
+
 function atualizarRemocoes(){
   if (!tabelaRemocoes) return;
   tabelaRemocoes.innerHTML = '';
-  (dados.remocoes || []).slice().reverse().forEach(r => {
+  (dados.remocoes || [])
+    .slice()
+    .reverse()
+    .filter(r => incluiTermo(termoRemocoes, [r.nome, r.tipo, r.patrimonio, r.justificativa, r.removidoPor, fmtData(r.data)]))
+    .forEach(r => {
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td data-label="Nome">${esc(r.nome || '-')}</td>
@@ -461,7 +579,9 @@ function atualizarUsuarios(){
   if (!tabelaUsuarios) return;
   tabelaUsuarios.innerHTML = '';
 
-  usuariosSistema.forEach(u => {
+  usuariosSistema
+    .filter(u => incluiTermo(termoUsuarios, [u.usuario, u.role]))
+    .forEach(u => {
     const tr = document.createElement('tr');
     const cargo = (u.role === 'admin') ? 'Admin' : 'Funcionário';
 
@@ -486,6 +606,7 @@ function atualizarTudo(){
   atualizarPessoas();
   atualizarEquipamentos();
   atualizarEmprestimos();
+  atualizarDanificados();
   atualizarRemocoes();
   atualizarSelects();
   atualizarUsuarios();
@@ -586,6 +707,8 @@ document.getElementById('btnDevolver').onclick = () => {
 
   const equip = dados.equipamentos.find(e => e.id === emp.equipamentoId);
   const statusNovo = statusDevolucao.value; // Funcionando / Danificado
+  const obs = notaDevolucao.value.trim();
+  const foto = fotoDevolucaoDataUrl || null;
 
   if (equip){
     const total = Number(equip.total ?? 0);
@@ -603,12 +726,34 @@ document.getElementById('btnDevolver').onclick = () => {
   }
 
   emp.status = statusNovo; // Funcionando / Danificado
-  emp.nota = notaDevolucao.value.trim();
+  emp.nota = obs;
   emp.dataDevolucao = nowISO();
   emp.fezDevolucao = getSessao().usuario || 'Desconhecido';
 
   // Foto opcional do estado do equipamento na devolução
-  emp.fotoDevolucao = fotoDevolucaoDataUrl || null;
+  emp.fotoDevolucao = foto;
+
+  // Se voltou danificado, cria um registro na aba "Danificados"
+  if (statusNovo === 'Danificado'){
+    dados.danificados = Array.isArray(dados.danificados) ? dados.danificados : [];
+    dados.danificados.push({
+      id: uuid(),
+      emprestimoId: emp.id,
+      equipamentoId: emp.equipamentoId,
+      equipamentoNome: emp.equipamentoNome,
+      patrimonio: emp.patrimonio,
+      pessoaNome: emp.alunoNome,
+      curso: emp.curso,
+      funcao: emp.funcao,
+      observacao: obs,
+      foto: foto,
+      data: nowISO(),
+      status: 'Danificado',
+      registradoPor: getSessao().usuario || 'Desconhecido',
+      resolvidoEm: null,
+      resolvidoPor: ''
+    });
+  }
 
   notaDevolucao.value = '';
   limparFotoDevolucao();
@@ -1046,10 +1191,113 @@ function verFotoDevolucao(id){
   );
 }
 
+function verFotoDanificado(id){
+  const d = (dados.danificados || []).find(x => x.id === id);
+  if (!d) return;
+  if (!d.foto) return alert('Este registro não possui foto.');
+
+  abrirModalVisualizacao(
+    `Foto — Danificado — ${esc(d.equipamentoNome || '')}`,
+    `<div class="photo-preview" style="border:none; padding:0;">
+       <img src="${esc(d.foto)}" alt="Foto do equipamento danificado" />
+     </div>`
+  );
+}
+
+function marcarConsertado(id){
+  if (!isAdmin()) return alert('Apenas ADM pode marcar como consertado.');
+  const d = (dados.danificados || []).find(x => x.id === id);
+  if (!d) return;
+  if ((d.status || 'Danificado') !== 'Danificado') return alert('Este registro já foi resolvido.');
+
+  const equip = dados.equipamentos.find(e => e.id === d.equipamentoId);
+  if (!equip) return alert('Equipamento não encontrado (talvez tenha sido removido).');
+
+  equip.total = Number(equip.total ?? 0);
+  equip.danificados = Number(equip.danificados ?? 0);
+  equip.disponivel = Number(equip.disponivel ?? 0);
+
+  if (equip.danificados < 1) return alert('Não há itens danificados para este equipamento.');
+
+  // 1) Sai de danificados
+  equip.danificados = Math.max(0, equip.danificados - 1);
+
+  // 2) Volta para disponível (respeitando o limite de utilizáveis)
+  const totalUtil = Math.max(0, equip.total - equip.danificados);
+  equip.disponivel = Math.min(totalUtil, equip.disponivel + 1);
+
+  d.status = 'Consertado';
+  d.resolvidoEm = nowISO();
+  d.resolvidoPor = getSessao().usuario || 'Desconhecido';
+
+  salvar();
+  atualizarTudo();
+}
+
+function darBaixaDanificado(id){
+  if (!isAdmin()) return alert('Apenas ADM pode dar baixa.');
+  const d = (dados.danificados || []).find(x => x.id === id);
+  if (!d) return;
+  if ((d.status || 'Danificado') !== 'Danificado') return alert('Este registro já foi resolvido.');
+
+  const equip = dados.equipamentos.find(e => e.id === d.equipamentoId);
+  if (!equip) return alert('Equipamento não encontrado (talvez já tenha sido removido).');
+
+  if (!confirm('Dar baixa neste item danificado? Isso reduz o total do equipamento em 1.')) return;
+
+  equip.total = Number(equip.total ?? 0);
+  equip.danificados = Number(equip.danificados ?? 0);
+  equip.disponivel = Number(equip.disponivel ?? 0);
+
+  if (equip.danificados < 1) return alert('Não há itens danificados para dar baixa.');
+  if (equip.total < 1) return alert('Total inválido.');
+
+  // calcula emprestados atuais com os valores ANTES de mexer
+  const totalUtilAtual = Math.max(0, equip.total - equip.danificados);
+  const emprestados = Math.max(0, totalUtilAtual - equip.disponivel);
+
+  // após dar baixa: total -1 e danificados -1
+  const novoTotal = equip.total - 1;
+  const novoDan = equip.danificados - 1;
+  if (novoTotal < 0) return alert('Operação inválida.');
+  if (novoTotal < novoDan + emprestados){
+    return alert('Não é possível dar baixa agora: o total ficaria menor que (danificados + emprestados).');
+  }
+
+  equip.total = novoTotal;
+  equip.danificados = Math.max(0, novoDan);
+
+  // ajusta disponível para não passar do limite de utilizáveis
+  const novoTotalUtil = Math.max(0, equip.total - equip.danificados);
+  equip.disponivel = Math.min(Math.max(0, equip.disponivel), novoTotalUtil);
+
+  // se total zerou, remove o equipamento do sistema
+  if (equip.total === 0){
+    dados.equipamentos = dados.equipamentos.filter(e => e.id !== equip.id);
+  }
+
+  registrarRemocao({
+    nome: d.equipamentoNome || equip.nome,
+    tipo: 'Equipamento',
+    patrimonio: d.patrimonio || equip.patrimonio,
+    justificativa: `Baixa por dano (sem conserto). Obs: ${d.observacao || '-'}`
+  });
+
+  d.status = 'Baixado';
+  d.resolvidoEm = nowISO();
+  d.resolvidoPor = getSessao().usuario || 'Desconhecido';
+
+  salvar();
+  atualizarTudo();
+}
+
 window.editarPessoa = editarPessoa;
 window.editarEquipamento = editarEquipamento;
 window.editarEmprestimo = editarEmprestimo;
 window.verFotoDevolucao = verFotoDevolucao;
+window.verFotoDanificado = verFotoDanificado;
+window.marcarConsertado = marcarConsertado;
+window.darBaixaDanificado = darBaixaDanificado;
 window.removerPessoa = removerPessoa;
 window.removerEquipamento = removerEquipamento;
 
@@ -1073,7 +1321,7 @@ btnGerarRel.onclick = () => {
   let html = `
     <h2>Relatório de Empréstimos</h2>
     <p class="muted">${ini ? ('De: ' + ini) : ''} ${fim ? (' Até: ' + fim) : ''}</p>
-    <div class="table-wrap">
+    <div class="table-wrap no-mobile-cards">
     <table>
       <thead>
         <tr>

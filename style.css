@@ -88,6 +88,19 @@ header h1{ margin:0; font-size:18px; line-height:1.1; }
 
 .between{ display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; }
 
+/* BUSCA / FILTROS */
+.search-row{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  flex-wrap:wrap;
+  margin:10px 0 12px;
+}
+.search-row input{
+  flex:1;
+  min-width: 240px;
+}
+
 h2{ margin:0; font-size:18px; }
 h3{ margin:0 0 12px; font-size:15px; }
 
@@ -325,6 +338,8 @@ table tr:nth-child(even){ background:#fafbff; }
     display:flex;
     justify-content:space-between;
     gap:10px;
+    align-items:flex-start;
+    word-break:break-word;
   }
   tbody td::before{
     content: attr(data-label);
@@ -337,13 +352,43 @@ table tr:nth-child(even){ background:#fafbff; }
   }
   .td-actions{ justify-content:flex-end; }
 
+  .search-row{ flex-direction:column; align-items:stretch; }
+  .search-row input{ min-width:0; }
+
+  /* Em relatórios, mantenha tabela normal (não virar cards) */
+  .no-mobile-cards table{ display:table !important; width:100% !important; }
+  .no-mobile-cards thead{ display:table-header-group !important; }
+  .no-mobile-cards tbody{ display:table-row-group !important; }
+  .no-mobile-cards tr{ display:table-row !important; }
+  .no-mobile-cards td, .no-mobile-cards th{ display:table-cell !important; }
+  .no-mobile-cards tbody td::before{ content:none !important; }
+  .no-mobile-cards .table-wrap{ border:1px solid var(--border); }
+
   /* modal ocupa mais a tela */
   .modal-card{ margin:4vh auto 0; width:min(96vw, 720px); }
 }
 
 @media print{
+  @page{ margin: 12mm; }
   body{ background:#fff; }
-  header, nav.tabs, .actions, .btn, .modal{ display:none !important; }
-  .card{ box-shadow:none; border:none; }
-  .table-wrap{ border:none; }
+
+  /* imprime somente o conteúdo do relatório */
+  body *{ visibility:hidden !important; }
+  #listaRelatorio, #listaRelatorio *{ visibility:visible !important; }
+  #listaRelatorio{
+    position:absolute;
+    left:0;
+    top:0;
+    width:100%;
+    overflow:visible !important;
+    background:#fff;
+  }
+
+  /* tabelas no print: sem cortes */
+  #listaRelatorio .table-wrap{ overflow:visible !important; border:none !important; }
+  #listaRelatorio table{ width:100% !important; min-width:0 !important; table-layout:fixed; }
+  #listaRelatorio th, #listaRelatorio td{ padding:6px !important; font-size:10px !important; word-break:break-word; }
+  #listaRelatorio th{ position:static !important; }
+  #listaRelatorio thead{ display:table-header-group; }
+  #listaRelatorio tr{ break-inside:avoid; page-break-inside:avoid; }
 }

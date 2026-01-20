@@ -45,6 +45,7 @@
     <div class="tab active" data-aba="pessoas">Pessoas</div>
     <div class="tab" data-aba="equipamentos">Equipamentos</div>
     <div class="tab" data-aba="emprestimos">Empréstimos</div>
+    <div class="tab" data-aba="danificados" id="tabDanificados">Danificados</div>
     <div class="tab" data-aba="remocoes" id="tabRemocoes">Remoções</div>
     <div class="tab" data-aba="relatorios">Relatórios</div>
     <div class="tab" data-aba="usuarios" id="tabUsuarios">Usuários (ADM)</div>
@@ -101,6 +102,11 @@
           </div>
         </div>
 
+        <div class="search-row">
+          <input id="filtroPessoas" placeholder="Pesquisar (nome, telefone, curso...)" />
+          <button class="btn btn-ghost btn-sm" type="button" id="limparFiltroPessoas">Limpar</button>
+        </div>
+
         <div class="table-wrap">
           <table id="tabelaPessoas">
             <thead>
@@ -150,6 +156,12 @@
 
       <div class="card">
         <h3>Lista de Equipamentos</h3>
+
+        <div class="search-row">
+          <input id="filtroEquipamentos" placeholder="Pesquisar (nome, patrimônio, status...)" />
+          <button class="btn btn-ghost btn-sm" type="button" id="limparFiltroEquipamentos">Limpar</button>
+        </div>
+
         <div class="table-wrap">
           <table id="tabelaEquipamentos">
             <thead>
@@ -249,6 +261,11 @@
           </div>
         </div>
 
+        <div class="search-row">
+          <input id="filtroEmprestimos" placeholder="Pesquisar (pessoa, equipamento, status, observação...)" />
+          <button class="btn btn-ghost btn-sm" type="button" id="limparFiltroEmprestimos">Limpar</button>
+        </div>
+
         <div class="table-wrap">
           <table id="tabelaEmprestimos">
             <thead>
@@ -272,6 +289,46 @@
       </div>
     </section>
 
+    <!-- Danificados -->
+    <section id="danificados" class="tab-content">
+      <div class="section-header">
+        <div>
+          <h2>Danificados</h2>
+          <p class="muted">Equipamentos devolvidos danificados (com foto e observação, quando houver).</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Lista de Danificados</h3>
+
+        <div class="search-row">
+          <input id="filtroDanificados" placeholder="Pesquisar (equipamento, patrimônio, pessoa, status...)" />
+          <button class="btn btn-ghost btn-sm" type="button" id="limparFiltroDanificados">Limpar</button>
+        </div>
+
+        <div class="table-wrap">
+          <table id="tabelaDanificados">
+            <thead>
+              <tr>
+                <th>Equipamento</th>
+                <th>Patrimônio</th>
+                <th>Pessoa</th>
+                <th>Data</th>
+                <th>Observação</th>
+                <th>Foto</th>
+                <th>Status</th>
+                <th style="width:240px">Ações</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <p class="muted" style="margin-top:10px;">
+          Regras: quando uma devolução é marcada como <b>Danificado</b>, ela aparece aqui automaticamente. Apenas o <b>ADM</b> pode marcar como consertado (voltar para disponível) ou dar baixa (sem conserto).
+        </p>
+      </div>
+    </section>
+
     <!-- Remoções -->
     <section id="remocoes" class="tab-content">
       <div class="section-header">
@@ -283,6 +340,12 @@
 
       <div class="card">
         <h3>Histórico de Remoções</h3>
+
+        <div class="search-row">
+          <input id="filtroRemocoes" placeholder="Pesquisar (nome, tipo, patrimônio, justificativa...)" />
+          <button class="btn btn-ghost btn-sm" type="button" id="limparFiltroRemocoes">Limpar</button>
+        </div>
+
         <div class="table-wrap">
           <table id="tabelaRemocoes">
             <thead>
@@ -367,6 +430,12 @@
 
       <div class="card">
         <h3>Lista de Usuários</h3>
+
+        <div class="search-row">
+          <input id="filtroUsuarios" placeholder="Pesquisar (usuário, cargo...)" />
+          <button class="btn btn-ghost btn-sm" type="button" id="limparFiltroUsuarios">Limpar</button>
+        </div>
+
         <div class="table-wrap">
           <table id="tabelaUsuarios">
             <thead>
