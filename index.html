@@ -3,188 +3,402 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Sistema de Reserva - Faculdade Santo Agostinho</title>
+  <title>Sistema de Reserva - Centro Universitário Santo Agostinho</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
+  <!-- TELA DE LOGIN -->
+  <div id="telaLogin" class="login-container" style="display:none;">
+    <div class="login-box">
+      <h2>Acesso ao Sistema</h2>
+
+      <input id="loginUser" placeholder="Usuário" autocomplete="username">
+      <input id="loginSenha" placeholder="Senha" type="password" autocomplete="current-password">
+      <button id="btnLogin" class="btn">Entrar</button>
+
+      <p class="hint">
+        * Contas são criadas apenas pelo <b>ADM</b>.
+      </p>
+    </div>
+  </div>
+
+  <!-- HEADER -->
   <header>
-    <h1>Sistema de Reserva</h1>
-    <button onclick="resetarSistema()">Resetar Sistema</button>
+    <div class="header-left">
+      <img src="logounifsa2023.fw_.png" alt="Logo UNIFSA" class="logo-unifsa" />
+      <div class="header-titles">
+        <h1>Sistema de Reserva</h1>
+        <span class="subtitle">Centro Universitário Santo Agostinho</span>
+      </div>
+    </div>
+
+    <div class="header-user-box">
+      <span id="usuarioLogadoLabel"></span>
+      <span id="usuarioRoleLabel" class="role-pill" style="display:none;"></span>
+      <button id="btnLogout" class="btn btn-ghost" onclick="logout()">Sair</button>
+    </div>
   </header>
 
   <!-- Abas principais -->
-  <nav class="tabs">
+  <nav class="tabs" aria-label="Abas principais">
     <div class="tab active" data-aba="pessoas">Pessoas</div>
     <div class="tab" data-aba="equipamentos">Equipamentos</div>
     <div class="tab" data-aba="emprestimos">Empréstimos</div>
-    <div class="tab" data-aba="remocoes">Remoções</div>
+    <div class="tab" data-aba="remocoes" id="tabRemocoes">Remoções</div>
     <div class="tab" data-aba="relatorios">Relatórios</div>
+    <div class="tab" data-aba="usuarios" id="tabUsuarios">Usuários (ADM)</div>
   </nav>
 
   <main class="container">
 
     <!-- Pessoas -->
     <section id="pessoas" class="tab-content active">
-      <h2>Registrar Pessoa</h2>
-
-      <div class="form-row">
-        <input id="nome" placeholder="Nome"/>
-        <input id="telefone" placeholder="Telefone"/>
-        <input id="curso" placeholder="Curso"/>
-        <select id="funcao">
-          <option value="">Selecione Função</option>
-          <option value="Aluno">Aluno</option>
-          <option value="Professor">Professor</option>
-          <option value="Colaborador">Colaborador</option>
-        </select>
-      </div>
-      <button id="btnRegistrarPessoa">Registrar</button>
-
-      <h3>Lista de Pessoas</h3>
-
-      <!-- Filtros por tipo -->
-      <div class="tabs" style="margin-bottom:10px;">
-        <div class="tab active" onclick="mostrarPessoasPorTipo('Aluno', this)">Alunos</div>
-        <div class="tab" onclick="mostrarPessoasPorTipo('Professor', this)">Professores</div>
-        <div class="tab" onclick="mostrarPessoasPorTipo('Colaborador', this)">Colaboradores</div>
+      <div class="section-header">
+        <div>
+          <h2>Pessoas</h2>
+          <p class="muted">Cadastre e gerencie pessoas do sistema.</p>
+        </div>
       </div>
 
-      <table id="tabelaPessoas">
-        <thead>
-          <tr>
-            <th>Nome</th>
-            <th>Telefone</th>
-            <th>Curso</th>
-            <th>Função</th>
-            <th>Ações</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
+      <div class="card">
+        <h3>Registrar Pessoa</h3>
+        <div class="grid grid-4">
+          <div class="field">
+            <label>Nome</label>
+            <input id="nome" placeholder="Nome"/>
+          </div>
+          <div class="field">
+            <label>Telefone</label>
+            <input id="telefone" placeholder="Telefone"/>
+          </div>
+          <div class="field">
+            <label>Curso</label>
+            <input id="curso" placeholder="Curso"/>
+          </div>
+          <div class="field">
+            <label>Função</label>
+            <select id="funcao">
+              <option value="">Selecione</option>
+              <option value="Aluno">Aluno</option>
+              <option value="Professor">Professor</option>
+              <option value="Colaborador">Colaborador</option>
+            </select>
+          </div>
+        </div>
+        <div class="actions">
+          <button id="btnRegistrarPessoa" class="btn">Registrar</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="between">
+          <h3>Lista de Pessoas</h3>
+          <div class="tabs tabs-mini" role="tablist" aria-label="Filtro de pessoas">
+            <div class="tab active" onclick="mostrarPessoasPorTipo('Aluno', this)">Alunos</div>
+            <div class="tab" onclick="mostrarPessoasPorTipo('Professor', this)">Professores</div>
+            <div class="tab" onclick="mostrarPessoasPorTipo('Colaborador', this)">Colaboradores</div>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table id="tabelaPessoas">
+            <thead>
+              <tr>
+                <th>Nome</th>
+                <th>Telefone</th>
+                <th>Curso</th>
+                <th>Função</th>
+                <th style="width:180px">Ações</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
     </section>
 
     <!-- Equipamentos -->
     <section id="equipamentos" class="tab-content">
-      <h2>Registrar Equipamento</h2>
-
-      <div class="form-row">
-        <input id="nomeEquipamento" placeholder="Nome do Equipamento"/>
-        <input id="patrimonio" placeholder="Número do Patrimônio"/>
-        <input id="quantidade" type="number" min="1" placeholder="Quantidade"/>
+      <div class="section-header">
+        <div>
+          <h2>Equipamentos</h2>
+          <p class="muted">Controle de patrimônio e disponibilidade.</p>
+        </div>
       </div>
-      <button id="btnRegistrarEquip">Registrar</button>
 
-      <h3>Lista de Equipamentos</h3>
-      <table id="tabelaEquipamentos">
-        <thead>
-          <tr>
-            <th>Nome</th>
-            <th>Patrimônio</th>
-            <th>Quantidade</th>
-            <th>Status</th>
-            <th>Ações</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
+      <div class="card">
+        <h3>Registrar Equipamento</h3>
+        <div class="grid grid-3">
+          <div class="field">
+            <label>Nome</label>
+            <input id="nomeEquipamento" placeholder="Nome do Equipamento"/>
+          </div>
+          <div class="field">
+            <label>Patrimônio</label>
+            <input id="patrimonio" placeholder="Número do Patrimônio"/>
+          </div>
+          <div class="field">
+            <label>Quantidade</label>
+            <input id="quantidade" type="number" min="1" placeholder="Quantidade"/>
+          </div>
+        </div>
+        <div class="actions">
+          <button id="btnRegistrarEquip" class="btn">Registrar</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Lista de Equipamentos</h3>
+        <div class="table-wrap">
+          <table id="tabelaEquipamentos">
+            <thead>
+              <tr>
+                <th>Nome</th>
+                <th>Patrimônio</th>
+                <th>Disponível</th>
+                <th>Total</th>
+                <th>Danificados</th>
+                <th>Status</th>
+                <th style="width:180px">Ações</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
     </section>
 
     <!-- Empréstimos -->
     <section id="emprestimos" class="tab-content">
-      <h2>Registrar Empréstimo</h2>
-
-      <div class="form-row inline">
-        <select id="alunoEmprestimo">
-          <option value="">Selecione a Pessoa</option>
-        </select>
-
-        <select id="equipEmprestimo">
-          <option value="">Selecione o Equipamento</option>
-        </select>
-
-        <button id="btnEmprestar">Emprestar</button>
+      <div class="section-header">
+        <div>
+          <h2>Empréstimos</h2>
+          <p class="muted">Registre empréstimos e devoluções com rastreio.</p>
+        </div>
       </div>
 
-      <h3>Registrar Devolução</h3>
-      <div class="form-row">
-        <select id="devolucaoSelect">
-          <option value="">Selecione o Empréstimo</option>
-        </select>
-
-        <select id="statusDevolucao">
-          <option value="Funcionando">Funcionando</option>
-          <option value="Danificado">Danificado</option>
-        </select>
-
-        <input id="notaDevolucao" placeholder="Observações"/>
-        <button id="btnDevolver">Devolver</button>
+      <div class="card">
+        <h3>Registrar Empréstimo</h3>
+        <div class="grid grid-3">
+          <div class="field">
+            <label>Pessoa</label>
+            <select id="alunoEmprestimo">
+              <option value="">Selecione a Pessoa</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Equipamento</label>
+            <select id="equipEmprestimo">
+              <option value="">Selecione o Equipamento</option>
+            </select>
+          </div>
+          <div class="field" style="display:flex; align-items:end;">
+            <button id="btnEmprestar" class="btn">Emprestar</button>
+          </div>
+        </div>
       </div>
 
-      <h3>Histórico de Empréstimos</h3>
+      <div class="card">
+        <h3>Registrar Devolução</h3>
+        <div class="grid grid-4">
+          <div class="field">
+            <label>Empréstimo</label>
+            <select id="devolucaoSelect">
+              <option value="">Selecione o Empréstimo</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Status</label>
+            <select id="statusDevolucao">
+              <option value="Funcionando">Funcionando</option>
+              <option value="Danificado">Danificado</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Observações</label>
+            <input id="notaDevolucao" placeholder="Observações"/>
+          </div>
+          <div class="field" style="display:flex; align-items:end;">
+            <button id="btnDevolver" class="btn">Devolver</button>
+          </div>
+        </div>
 
-      <!-- Filtro por tipo -->
-      <div class="tabs" style="margin:10px 0;">
-        <div class="tab active" onclick="mostrarEmprestimos('Aluno', this)">Alunos</div>
-        <div class="tab" onclick="mostrarEmprestimos('Professor', this)">Professores</div>
-        <div class="tab" onclick="mostrarEmprestimos('Colaborador', this)">Colaboradores</div>
+        <!-- Foto do equipamento (aparece no layout mobile) -->
+        <div class="mobile-photo">
+          <div class="field">
+            <label>Foto do equipamento (opcional)</label>
+            <input id="fotoDevolucaoInput" type="file" accept="image/*" capture="environment">
+            <p class="muted" style="margin:6px 0 0;">Use para registrar o estado do equipamento no momento da devolução.</p>
+          </div>
+
+          <div class="photo-preview" id="fotoDevolucaoBox" style="display:none;">
+            <img id="fotoDevolucaoPreview" alt="Prévia da foto do equipamento" />
+            <button id="btnRemoverFotoDevolucao" class="btn btn-ghost" type="button">Remover foto</button>
+          </div>
+        </div>
       </div>
 
-      <table id="tabelaEmprestimos">
-        <thead>
-          <tr>
-            <th>Equipamento</th>
-            <th>Nome</th>
-            <th>Curso</th>
-            <th>Função</th>
-            <th>Status</th>
-            <th>Observação</th>
-            <th>Data Empréstimo</th>
-            <th>Data Devolução</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
+      <div class="card">
+        <div class="between">
+          <h3>Histórico de Empréstimos</h3>
+          <div class="tabs tabs-mini" role="tablist" aria-label="Filtro de empréstimos">
+            <div class="tab active" onclick="mostrarEmprestimos('Aluno', this)">Alunos</div>
+            <div class="tab" onclick="mostrarEmprestimos('Professor', this)">Professores</div>
+            <div class="tab" onclick="mostrarEmprestimos('Colaborador', this)">Colaboradores</div>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table id="tabelaEmprestimos">
+            <thead>
+              <tr>
+                <th>Equipamento</th>
+                <th>Nome</th>
+                <th>Curso</th>
+                <th>Função</th>
+                <th>Status</th>
+                <th>Observação</th>
+                <th>Data Empréstimo</th>
+                <th>Data Devolução</th>
+                <th>Registrado por</th>
+                <th>Devolvido por</th>
+                <th style="width:120px">Ações</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
     </section>
 
     <!-- Remoções -->
     <section id="remocoes" class="tab-content">
-      <h2>Histórico de Remoções</h2>
+      <div class="section-header">
+        <div>
+          <h2>Remoções</h2>
+          <p class="muted">Visível apenas para ADM.</p>
+        </div>
+      </div>
 
-      <table id="tabelaRemocoes">
-        <thead>
-          <tr>
-            <th>Nome</th>
-            <th>Tipo</th>
-            <th>Patrimônio</th>
-            <th>Justificativa</th>
-            <th>Data</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
+      <div class="card">
+        <h3>Histórico de Remoções</h3>
+        <div class="table-wrap">
+          <table id="tabelaRemocoes">
+            <thead>
+              <tr>
+                <th>Nome</th>
+                <th>Tipo</th>
+                <th>Patrimônio</th>
+                <th>Justificativa</th>
+                <th>Data</th>
+                <th>Removido por</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
     </section>
 
     <!-- Relatórios -->
     <section id="relatorios" class="tab-content">
-      <h2>Relatórios</h2>
-
-      <div class="form-row inline">
-        <label>De:</label>
-        <input type="date" id="relDataInicio">
-
-        <label>Até:</label>
-        <input type="date" id="relDataFim">
-
-        <button id="btnGerarRel">Gerar</button>
-        <button id="btnImprimirRel">Imprimir</button>
+      <div class="section-header">
+        <div>
+          <h2>Relatórios</h2>
+          <p class="muted">Filtre por datas e imprima.</p>
+        </div>
       </div>
 
-      <div id="resumoRelatorio"></div>
-      <div id="listaRelatorio" class="relatorio-box"></div>
+      <div class="card">
+        <h3>Gerar Relatório</h3>
+        <div class="grid grid-4">
+          <div class="field">
+            <label>De</label>
+            <input type="date" id="relDataInicio">
+          </div>
+          <div class="field">
+            <label>Até</label>
+            <input type="date" id="relDataFim">
+          </div>
+          <div class="field" style="display:flex; align-items:end; gap:8px;">
+            <button id="btnGerarRel" class="btn">Gerar</button>
+            <button id="btnImprimirRel" class="btn btn-ghost">Imprimir</button>
+          </div>
+        </div>
+
+        <div class="relatorio-box" id="listaRelatorio"></div>
+      </div>
+    </section>
+
+    <!-- Usuários (ADM) -->
+    <section id="usuarios" class="tab-content">
+      <div class="section-header">
+        <div>
+          <h2>Usuários</h2>
+          <p class="muted">Gerencie contas de acesso (apenas ADM).</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Criar Usuário</h3>
+        <div class="grid grid-3">
+          <div class="field">
+            <label>Usuário</label>
+            <input id="novoUsuario" placeholder="Usuário"/>
+          </div>
+          <div class="field">
+            <label>Senha</label>
+            <input id="novaSenha" placeholder="Senha" type="password"/>
+          </div>
+          <div class="field">
+            <label>Cargo</label>
+            <select id="novoCargo">
+              <option value="funcionario">Funcionário</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+        </div>
+        <div class="actions">
+          <button id="btnCriarUsuario" class="btn">Criar</button>
+          <button id="btnResetSistemaAdmin" class="btn btn-danger">Resetar Sistema</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Lista de Usuários</h3>
+        <div class="table-wrap">
+          <table id="tabelaUsuarios">
+            <thead>
+              <tr>
+                <th>Usuário</th>
+                <th>Cargo</th>
+                <th style="width:220px">Ações</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
     </section>
 
   </main>
+
+  <!-- MODAL (Edição) -->
+  <div id="modal" class="modal" style="display:none;" aria-hidden="true">
+    <div class="modal-backdrop" onclick="fecharModal()"></div>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitulo">
+      <div class="modal-header">
+        <h3 id="modalTitulo">Editar</h3>
+        <button class="btn btn-ghost" onclick="fecharModal()">Fechar</button>
+      </div>
+      <div id="modalBody" class="modal-body"></div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="fecharModal()">Cancelar</button>
+        <button id="modalSalvar" class="btn">Salvar</button>
+      </div>
+    </div>
+  </div>
 
   <script src="script.js"></script>
 </body>
