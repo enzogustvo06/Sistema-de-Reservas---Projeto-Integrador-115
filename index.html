@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Sistema de Reserva - Centro Universitário Santo Agostinho</title>
+  <title>Sistema de Reservas — UNIFSA</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -28,12 +28,21 @@
     <div class="header-left">
       <img src="logounifsa2023.fw_.png" alt="Logo UNIFSA" class="logo-unifsa" />
       <div class="header-titles">
-        <h1>Sistema de Reserva</h1>
-        <span class="subtitle">Centro Universitário Santo Agostinho</span>
+        <h1>Sistema de Reservas</h1>
+        <span class="subtitle">Centro Universitário Santo Agostinho — UNIFSA</span>
       </div>
     </div>
 
     <div class="header-user-box">
+
+      <div class="unit-switch unit-switch--header" role="group" aria-label="Seleção de unidade">
+        <span class="unit-label">Unidade</span>
+        <div class="unit-tabs" role="tablist" aria-label="Unidades">
+          <button type="button" class="unit-tab" data-unidade="SEDE" id="tabUnidadeSEDE">Sede</button>
+          <button type="button" class="unit-tab" data-unidade="ANEXO2" id="tabUnidadeANEXO2">Anexo II</button>
+        </div>
+      </div>
+
       <span id="usuarioLogadoLabel"></span>
       <span id="usuarioRoleLabel" class="role-pill" style="display:none;"></span>
       <button id="btnLogout" class="btn btn-ghost" onclick="logout()">Sair</button>
@@ -374,6 +383,7 @@
       </div>
 
       <div class="card">
+        
         <h3>Gerar Relatório</h3>
         <div class="grid grid-4">
           <div class="field">
@@ -384,11 +394,29 @@
             <label>Até</label>
             <input type="date" id="relDataFim">
           </div>
-          <div class="field" style="display:flex; align-items:end; gap:8px;">
-            <button id="btnGerarRel" class="btn">Gerar</button>
-            <button id="btnImprimirRel" class="btn btn-ghost">Imprimir</button>
+          <div class="field">
+            <label>Tipo</label>
+            <select id="relTipo">
+              <option value="emprestimos">Empréstimos</option>
+              <option value="danificados">Danificados</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Função</label>
+            <select id="relFuncao">
+              <option value="todos">Todas</option>
+              <option value="Aluno">Aluno</option>
+              <option value="Professor">Professor</option>
+              <option value="Colaborador">Colaborador</option>
+            </select>
           </div>
         </div>
+
+        <div class="actions">
+          <button id="btnGerarRel" class="btn">Gerar</button>
+          <button id="btnImprimirRel" class="btn btn-ghost" type="button">Imprimir</button>
+        </div>
+</div>
 
         <div class="relatorio-box" id="listaRelatorio"></div>
       </div>

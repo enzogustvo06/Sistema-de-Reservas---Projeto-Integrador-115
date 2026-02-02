@@ -33,6 +33,37 @@ let dados = JSON.parse(localStorage.getItem('faculdadeDados')) || {
   remocoes: []
 };
 
+
+// ---------- Unidade (SEDE / ANEXO II) ----------
+const UNIDADES = [
+  { id: 'SEDE', label: 'Sede' },
+  { id: 'ANEXO2', label: 'Anexo II' }
+];
+
+let unidadeAtiva = localStorage.getItem('unidadeAtiva') || 'SEDE';
+
+function setUnidadeAtiva(id){
+  unidadeAtiva = id;
+  localStorage.setItem('unidadeAtiva', id);
+  atualizarTudo();
+  atualizarUnidadeUI();
+}
+
+function atualizarUnidadeUI(){
+  const btnSede = document.getElementById('tabUnidadeSEDE');
+  const btnAnexo = document.getElementById('tabUnidadeANEXO2');
+  if (btnSede) btnSede.classList.toggle('active', unidadeAtiva === 'SEDE');
+  if (btnAnexo) btnAnexo.classList.toggle('active', unidadeAtiva === 'ANEXO2');
+}
+
+function bindUnidadeUI(){
+  const btnSede = document.getElementById('tabUnidadeSEDE');
+  const btnAnexo = document.getElementById('tabUnidadeANEXO2');
+  if (btnSede) btnSede.addEventListener('click', () => setUnidadeAtiva('SEDE'));
+  if (btnAnexo) btnAnexo.addEventListener('click', () => setUnidadeAtiva('ANEXO2'));
+}
+
+
 function salvar(){
   localStorage.setItem('faculdadeDados', JSON.stringify(dados));
 }
@@ -137,6 +168,14 @@ function migrarDados(){
 
   // Danificados: garantir array
   dados.danificados = Array.isArray(dados.danificados) ? dados.danificados : [];
+
+  // Unidade: garantir campo em todos os registros (dados antigos viram SEDE)
+  const garantirUnidade = (obj) => ({ ...obj, unidade: obj.unidade || 'SEDE' });
+  dados.pessoas = (dados.pessoas || []).map(garantirUnidade);
+  dados.equipamentos = (dados.equipamentos || []).map(garantirUnidade);
+  dados.emprestimos = (dados.emprestimos || []).map(garantirUnidade);
+  dados.danificados = (dados.danificados || []).filter(d => (d.unidade || 'SEDE') === unidadeAtiva).map(garantirUnidade);
+  dados.remocoes = (dados.remocoes || []).filter(r => (r.unidade || 'SEDE') === unidadeAtiva).map(garantirUnidade);
 
   salvar();
 }
@@ -282,9 +321,9 @@ if (fotoDevolucaoInput){
     }
 
     // limite simples para evitar explodir o localStorage
-    const maxBytes = 900 * 1024; // ~900 KB
+    const maxBytes = 1200 * 1024; // ~1.2 MB (mantém seguro para localStorage)
     if (file.size > maxBytes){
-      alert('Imagem muito grande. Tente uma foto menor (até ~900KB).');
+      alert('Imagem muito grande. Tente uma foto menor (até ~1.2MB).');
       limparFotoDevolucao();
       return;
     }
@@ -379,6 +418,7 @@ window.fecharModal = fecharModal;
 function atualizarPessoas(){
   tabelaPessoas.innerHTML = '';
   dados.pessoas
+    .filter(p => (p.unidade || 'SEDE') === unidadeAtiva)
     .filter(p => p.funcao === filtroPessoa)
     .filter(p => matchAllFields(p, pesquisa.pessoas))
     .forEach(p => {
@@ -403,6 +443,7 @@ function atualizarPessoas(){
 function atualizarEquipamentos(){
   tabelaEquipamentos.innerHTML = '';
   dados.equipamentos
+    .filter(e => (e.unidade || 'SEDE') === unidadeAtiva)
     .filter(e => matchAllFields(e, pesquisa.equipamentos))
     .forEach(e => {
     const tr = document.createElement('tr');
@@ -439,6 +480,7 @@ function atualizarEquipamentos(){
 function atualizarEmprestimos(){
   tabelaEmprestimos.innerHTML = '';
   dados.emprestimos
+    .filter(e => (e.unidade || 'SEDE') === unidadeAtiva)
     .filter(e => e.funcao === filtroEmprestimo)
     .filter(e => matchAllFields(e, pesquisa.emprestimos))
     .sort((a,b) => (b.dataEmprestimo || '').localeCompare(a.dataEmprestimo || ''))
@@ -532,13 +574,16 @@ function atualizarRemocoes(){
 function atualizarSelects(){
   // pessoas
   alunoEmprestimo.innerHTML = '<option value="">Selecione a Pessoa</option>';
-  dados.pessoas.forEach(p => {
+  dados.pessoas
+    .filter(p => (p.unidade || 'SEDE') === unidadeAtiva)
+    .forEach(p => {
     alunoEmprestimo.innerHTML += `<option value="${p.id}">${esc(p.nome)} (${esc(p.funcao)})</option>`;
   });
 
   // equipamentos (apenas com disponivel)
   equipEmprestimo.innerHTML = '<option value="">Selecione o Equipamento</option>';
   dados.equipamentos
+    .filter(e => (e.unidade || 'SEDE') === unidadeAtiva)
     .filter(e => Number(e.disponivel ?? 0) > 0)
     .forEach(e => {
       const total = Number(e.total ?? 0);
@@ -550,6 +595,7 @@ function atualizarSelects(){
   // devoluções: apenas empréstimos em aberto
   devolucaoSelect.innerHTML = '<option value="">Selecione o Empréstimo</option>';
   dados.emprestimos
+    .filter(e => (e.unidade || 'SEDE') === unidadeAtiva)
     .filter(e => e.status === 'Emprestado')
     .forEach(e => {
       devolucaoSelect.innerHTML += `<option value="${e.id}">${esc(e.alunoNome)} → ${esc(e.equipamentoNome)}</option>`;
@@ -609,7 +655,8 @@ btnRegistrarPessoa.onclick = () => {
     curso: c,
     funcao: f,
     criadoEm: nowISO(),
-    criadoPor: getSessao().usuario || 'Desconhecido'
+    criadoPor: getSessao().usuario || 'Desconhecido',
+    unidade: unidadeAtiva
   });
 
   nome.value = telefone.value = curso.value = '';
@@ -638,7 +685,8 @@ btnRegistrarEquip.onclick = () => {
     disponivel: q,
     danificados: 0,
     criadoEm: nowISO(),
-    criadoPor: getSessao().usuario || 'Desconhecido'
+    criadoPor: getSessao().usuario || 'Desconhecido',
+    unidade: unidadeAtiva
   });
 
   nomeEquipamento.value = patrimonio.value = quantidade.value = '';
@@ -671,7 +719,8 @@ document.getElementById('btnEmprestar').onclick = () => {
     dataEmprestimo: nowISO(),
     dataDevolucao: null,
     fezEmprestimo: getSessao().usuario || 'Desconhecido',
-    fezDevolucao: ''
+    fezDevolucao: '',
+    unidade: unidadeAtiva
   });
 
   equip.disponivel -= 1;
@@ -732,7 +781,8 @@ document.getElementById('btnDevolver').onclick = () => {
       status: 'Danificado',
       registradoPor: getSessao().usuario || 'Desconhecido',
       resolvidoEm: null,
-      resolvidoPor: ''
+      resolvidoPor: '',
+      unidade: unidadeAtiva
     });
   }
 
@@ -749,6 +799,7 @@ function registrarRemocao(payload){
     id: uuid(),
     data: nowISO(),
     removidoPor: getSessao().usuario || 'Desconhecido',
+    unidade: unidadeAtiva,
     ...payload
   });
 }
@@ -1287,55 +1338,116 @@ btnGerarRel.onclick = () => {
   const ini = document.getElementById('relDataInicio').value;
   const fim = document.getElementById('relDataFim').value;
 
-  // filtra por datas se preenchidas
+  const tipo = (document.getElementById('relTipo')?.value || 'emprestimos');
+  const funcFil = (document.getElementById('relFuncao')?.value || 'todos');
+
   const iniDt = ini ? new Date(ini + 'T00:00:00') : null;
   const fimDt = fim ? new Date(fim + 'T23:59:59') : null;
 
-  const lista = dados.emprestimos.filter(emp => {
+  const filtraData = (iso) => {
     if (!iniDt && !fimDt) return true;
-    const d = new Date(emp.dataEmprestimo);
+    const d = new Date(iso);
     if (iniDt && d < iniDt) return false;
     if (fimDt && d > fimDt) return false;
     return true;
-  });
+  };
+
+  let lista = [];
+  if (tipo === 'danificados'){
+    lista = (dados.danificados || [])
+      .filter(d => (d.unidade || 'SEDE') === unidadeAtiva)
+      .filter(d => funcFil === 'todos' ? true : (d.funcao === funcFil))
+      .filter(d => filtraData(d.data || d.dataRegistro || d.dataEmprestimo || nowISO()));
+  } else {
+    lista = (dados.emprestimos || [])
+      .filter(emp => (emp.unidade || 'SEDE') === unidadeAtiva)
+      .filter(emp => funcFil === 'todos' ? true : (emp.funcao === funcFil))
+      .filter(emp => filtraData(emp.dataEmprestimo));
+  }
+
+  const titulo = (tipo === 'danificados') ? 'Relatório de Danificados' : 'Relatório de Reservas';
+  const unidadeTxt = (unidadeAtiva === 'ANEXO2') ? 'Anexo II' : 'Sede';
 
   let html = `
     <div id="relatorioCard">
-      <h2>Relatório de Empréstimos</h2>
-      <p class="muted">${ini ? ('De: ' + ini) : ''} ${fim ? (' Até: ' + fim) : ''}</p>
+      <h2>${titulo}</h2>
+      <p class="muted">
+        Unidade: <b>${unidadeTxt}</b>
+        ${ini ? (' • De: ' + ini) : ''}
+        ${fim ? (' • Até: ' + fim) : ''}
+        ${(funcFil !== 'todos') ? (' • Função: ' + funcFil) : ''}
+      </p>
       <div class="table-wrap no-mobile-cards">
-      <table>
-      <thead>
-        <tr>
-          <th>Equipamento</th>
-          <th>Nome</th>
-          <th>Função</th>
-          <th>Status</th>
-          <th>Observação</th>
-          <th>Data Empréstimo</th>
-          <th>Data Devolução</th>
-          <th>Registrado por</th>
-          <th>Devolvido por</th>
-        </tr>
-      </thead>
-      <tbody>
+        <table>
+          <thead>
   `;
 
-  lista.forEach(emp => {
+  if (tipo === 'danificados'){
     html += `
       <tr>
-        <td>${esc(emp.equipamentoNome)}</td>
-        <td>${esc(emp.alunoNome)}</td>
-        <td>${esc(emp.funcao)}</td>
-        <td>${esc(emp.status)}</td>
-        <td>${esc(emp.nota || '-')}</td>
-        <td>${fmtData(emp.dataEmprestimo)}</td>
-        <td>${emp.dataDevolucao ? fmtData(emp.dataDevolucao) : '-'}</td>
-        <td>${esc(emp.fezEmprestimo || '-')}</td>
-        <td>${esc(emp.fezDevolucao || '-')}</td>
+        <th>Equipamento</th>
+        <th>Patrimônio</th>
+        <th>Pessoa</th>
+        <th>Função</th>
+        <th>Data</th>
+        <th>Observação</th>
+        <th>Status</th>
       </tr>
+    </thead><tbody>
     `;
-  });
+
+    lista
+      .slice()
+      .sort((a,b) => (b.data || '').localeCompare(a.data || ''))
+      .forEach(d => {
+        html += `
+          <tr>
+            <td>${esc(d.equipamentoNome || d.equipamento || '-')}</td>
+            <td>${esc(d.patrimonio || '-')}</td>
+            <td>${esc(d.pessoaNome || d.pessoa || '-')}</td>
+            <td>${esc(d.funcao || '-')}</td>
+            <td>${fmtData(d.data || '')}</td>
+            <td>${esc(d.observacao || d.obs || '-')}</td>
+            <td>${esc(d.status || 'Danificado')}</td>
+          </tr>
+        `;
+      });
+
+  } else {
+    html += `
+      <tr>
+        <th>Equipamento</th>
+        <th>Nome</th>
+        <th>Função</th>
+        <th>Status</th>
+        <th>Observação</th>
+        <th>Data Empréstimo</th>
+        <th>Data Devolução</th>
+        <th>Registrado por</th>
+        <th>Devolvido por</th>
+      </tr>
+    </thead><tbody>
+    `;
+
+    lista
+      .slice()
+      .sort((a,b) => (b.dataEmprestimo || '').localeCompare(a.dataEmprestimo || ''))
+      .forEach(emp => {
+        html += `
+          <tr>
+            <td>${esc(emp.equipamentoNome || '-')}</td>
+            <td>${esc(emp.alunoNome || '-')}</td>
+            <td>${esc(emp.funcao || '-')}</td>
+            <td>${esc(emp.status || '-')}</td>
+            <td>${esc(emp.nota || '-')}</td>
+            <td>${fmtData(emp.dataEmprestimo)}</td>
+            <td>${emp.dataDevolucao ? fmtData(emp.dataDevolucao) : '-'}</td>
+            <td>${esc(emp.fezEmprestimo || '-')}</td>
+            <td>${esc(emp.fezDevolucao || '-')}</td>
+          </tr>
+        `;
+      });
+  }
 
   html += `</tbody></table></div></div>`;
   listaRelatorio.innerHTML = html;
@@ -1478,4 +1590,16 @@ if (btnResetSistemaAdmin){
       limparFotoDevolucao();
     });
   }
+})();
+
+
+// ---------- Inicialização ----------
+(function init(){
+  migrarDados();
+  if (!verificarLogin()) return;
+  mostrarUsuarioNoHeader();
+  aplicarPermissoes();
+  bindUnidadeUI();
+  atualizarUnidadeUI();
+  atualizarTudo();
 })();

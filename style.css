@@ -397,3 +397,79 @@ table tr:nth-child(even){ background:#fafbff; }
   #relatorioCard th, #relatorioCard td{ padding:6px; word-break:break-word; }
   #relatorioCard tr{ page-break-inside:avoid; }
 }
+
+
+/* Unidade (SEDE / ANEXO II) — seletor institucional */
+.unit-switch{
+  width:100%;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  align-items:flex-start;
+  margin-top:8px;
+}
+
+.unit-label{
+  font-size:12px;
+  opacity:.9;
+  font-weight:700;
+}
+
+.unit-tabs{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+.unit-tab{
+  background:rgba(255,255,255,.16);
+  border:1px solid rgba(255,255,255,.25);
+  color:#fff;
+  padding:7px 12px;
+  border-radius:999px;
+  font-weight:800;
+  cursor:pointer;
+  user-select:none;
+}
+
+.unit-tab.active{
+  background:var(--accent);
+  border-color:var(--accent);
+  color:var(--brand);
+}
+
+@media (max-width: 640px){
+  .unit-switch{ align-items:stretch; }
+  .unit-tabs{ width:100%; }
+  .unit-tab{ flex:1; text-align:center; }
+}
+
+
+/* Unidade no header (posicionamento estratégico) */
+.unit-switch--header{
+  margin-top: 0;
+  align-items: flex-end;
+  text-align: right;
+}
+
+.unit-switch--header .unit-label{
+  font-size: 11px;
+  letter-spacing: .02em;
+  text-transform: uppercase;
+  opacity: .9;
+}
+
+.unit-switch--header .unit-tabs{
+  justify-content: flex-end;
+}
+
+@media (max-width: 640px){
+  .unit-switch--header{
+    align-items: stretch;
+    text-align: left;
+    margin-bottom: 8px;
+  }
+  .unit-switch--header .unit-tabs{
+    justify-content: stretch;
+  }
+}
