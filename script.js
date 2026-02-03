@@ -75,7 +75,16 @@ let usuariosSistema = JSON.parse(localStorage.getItem('usuariosSistema')) || [
 
 // migração: usuários antigos sem role -> funcionario
 usuariosSistema = usuariosSistema.map(u => ({ ...u, role: u.role || 'funcionario' }));
+
+// garantia: admin padrão sempre existe e sempre é admin (evita "perder" permissão ao trocar de origem/servidor)
+if (!usuariosSistema.some(u => u.usuario === 'admin' || u.id === 'admin')){
+  usuariosSistema.push({ id: 'admin', usuario: 'admin', senha: '1234', role: 'admin' });
+}
+usuariosSistema = usuariosSistema.map(u => (u.usuario === 'admin' || u.id === 'admin') ? { ...u, role: 'admin' } : u);
 function salvarUsuarios(){ localStorage.setItem('usuariosSistema', JSON.stringify(usuariosSistema)); }
+
+// salva normalizações/migrações de usuários (evita diferenças entre GitHub Pages e Live Server)
+salvarUsuarios();
 
 function getSessao(){
   const usuario = localStorage.getItem('usuarioLogado');
@@ -1552,13 +1561,17 @@ if (btnResetSistemaAdmin){
   btnResetSistemaAdmin.onclick = resetarSistema;
 }
 
-// ---------- INIT ----------
+// ---------- Inicialização ----------
 (function init(){
+  migrarDados();
   if (!verificarLogin()) return;
 
-  migrarDados();
   mostrarUsuarioNoHeader();
   aplicarPermissoes();
+
+  // Unidade (Sede / Anexo II) - evita misturar dados
+  bindUnidadeUI();
+  atualizarUnidadeUI();
 
   atualizarTudo();
 
@@ -1590,16 +1603,4 @@ if (btnResetSistemaAdmin){
       limparFotoDevolucao();
     });
   }
-})();
-
-
-// ---------- Inicialização ----------
-(function init(){
-  migrarDados();
-  if (!verificarLogin()) return;
-  mostrarUsuarioNoHeader();
-  aplicarPermissoes();
-  bindUnidadeUI();
-  atualizarUnidadeUI();
-  atualizarTudo();
 })();
