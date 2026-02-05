@@ -43,9 +43,13 @@
         </div>
       </div>
 
-      <span id="usuarioLogadoLabel"></span>
-      <span id="usuarioRoleLabel" class="role-pill" style="display:none;"></span>
-      <button id="btnLogout" class="btn btn-ghost" onclick="logout()">Sair</button>
+      
+      <div class="user-info"><button id="btnAccountDrawer" class="user-avatar-btn" type="button" aria-label="Conta" title="Conta">
+        <span class="user-avatar-icon" aria-hidden="true">👤</span>
+      </button>
+        <span id="usuarioLogadoNome" class="user-name"></span>
+      </div>
+
     </div>
   </header>
 
@@ -204,15 +208,17 @@
         <div class="grid grid-3">
           <div class="field">
             <label>Pessoa</label>
-            <select id="alunoEmprestimo">
-              <option value="">Selecione a Pessoa</option>
-            </select>
+            <div class="combo">
+            <input id="alunoEmprestimo" class="combo-input" type="text" placeholder="Digite para buscar e selecionar a pessoa" autocomplete="off" />
+            <div id="alunoEmprestimoList" class="combo-list" style="display:none;"></div>
+          </div>
           </div>
           <div class="field">
             <label>Equipamento</label>
-            <select id="equipEmprestimo">
-              <option value="">Selecione o Equipamento</option>
-            </select>
+            <div class="combo">
+            <input id="equipEmprestimo" class="combo-input" type="text" placeholder="Digite para buscar e selecionar o equipamento" autocomplete="off" />
+            <div id="equipEmprestimoList" class="combo-list" style="display:none;"></div>
+          </div>
           </div>
           <div class="field" style="display:flex; align-items:end;">
             <button id="btnEmprestar" class="btn">Emprestar</button>
@@ -225,9 +231,10 @@
         <div class="grid grid-4">
           <div class="field">
             <label>Empréstimo</label>
-            <select id="devolucaoSelect">
-              <option value="">Selecione o Empréstimo</option>
-            </select>
+            <div class="combo">
+            <input id="devolucaoSelect" class="combo-input" type="text" placeholder="Digite para buscar e selecionar o empréstimo" autocomplete="off" />
+            <div id="devolucaoSelectList" class="combo-list" style="display:none;"></div>
+          </div>
           </div>
           <div class="field">
             <label>Status</label>
@@ -496,6 +503,80 @@
       </div>
     </div>
   </div>
+
+
+  <!-- DRAWER DE CONTAS -->
+  <div id="accountDrawerOverlay" class="drawer-overlay" style="display:none;"></div>
+
+  <aside id="accountDrawer" class="drawer drawer-right" aria-hidden="true">
+    <div class="drawer-header">
+      <div class="drawer-title">
+        <h3>Conta</h3>
+        <p class="drawer-subtitle">Troca rápida de usuários</p>
+      </div>
+      <button id="btnCloseAccountDrawer" class="btn btn-ghost drawer-close" type="button" aria-label="Fechar">✕</button>
+    </div>
+
+    <div class="drawer-content">
+      <section class="drawer-section">
+        <h4 class="drawer-section-title">Usuário atual</h4>
+        <div class="current-user-card">
+          <div class="current-user-row">
+            <span class="current-user-label">Usuário</span>
+            <strong id="drawerUsuarioAtual">—</strong>
+          </div>
+          <div class="current-user-row">
+            <span class="current-user-label">Perfil</span>
+            <span id="drawerRoleAtual" class="role-pill" style="display:none;"></span>
+          </div>
+          <div class="current-user-row">
+            <span class="current-user-label">Unidade</span>
+            <span id="drawerUnidadeAtual">—</span>
+          </div>
+
+          <div class="current-user-actions">
+            <button id="drawerBtnLogout" class="btn btn-danger" type="button">Sair</button>
+          </div>
+          <p class="drawer-hint">
+            Dica: para não deixar conta logada, clique em <b>Sair</b> ao terminar.
+          </p>
+        </div>
+      </section>
+
+      <section class="drawer-section">
+        <h4 class="drawer-section-title">Trocar para</h4>
+        <div id="drawerAccountsList" class="accounts-list"></div>
+        <p class="drawer-hint">
+          Contas salvas ficam apenas neste navegador.
+        </p>
+      </section>
+
+      <section class="drawer-section">
+        <h4 class="drawer-section-title">Adicionar conta</h4>
+        <div class="form-grid form-grid--1">
+          <label class="field">
+            <span>Usuário</span>
+            <input id="drawerAddUser" placeholder="ex.: enzo" autocomplete="username" />
+          </label>
+          <label class="field">
+            <span>Senha</span>
+            <input id="drawerAddPass" type="password" placeholder="••••••••" autocomplete="current-password" />
+          </label>
+
+          <label class="checkbox-line">
+            <input id="drawerRememberPass" type="checkbox" />
+            <span>Salvar senha neste dispositivo (não recomendado em PC compartilhado)</span>
+          </label>
+
+          <div class="drawer-actions">
+            <button id="drawerBtnAddAccount" class="btn" type="button">Adicionar</button>
+            <button id="drawerBtnLoginAccount" class="btn btn-secondary" type="button">Entrar</button>
+          </div>
+        </div>
+      </section>
+    </div>
+  </aside>
+
 
   <script src="script.js"></script>
 </body>

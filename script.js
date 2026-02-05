@@ -108,11 +108,13 @@ function logout(){
 }
 
 function mostrarUsuarioNoHeader(){
+  const nomeSpan = document.getElementById('usuarioLogadoNome');
   const { usuario, role } = getSessao();
   const label = document.getElementById('usuarioLogadoLabel');
   const roleLabel = document.getElementById('usuarioRoleLabel');
 
   if (label && usuario) label.textContent = 'Logado como: ' + usuario;
+  if (nomeSpan) nomeSpan.textContent = usuario || '';
 
   if (roleLabel && role){
     roleLabel.style.display = 'inline-block';
@@ -135,13 +137,25 @@ function verificarLogin(){
     if (loginTela) loginTela.style.display = 'flex';
 
     const btn = document.getElementById('btnLogin');
-    if (btn){
-      btn.onclick = () => {
-        const u = document.getElementById('loginUser').value.trim();
-        const s = document.getElementById('loginSenha').value;
-        if (login(u, s)) location.reload();
-      };
-    }
+    const inUser = document.getElementById('loginUser');
+    const inPass = document.getElementById('loginSenha');
+    const doLogin = () => {
+      const u = (inUser?.value || '').trim();
+      const s = (inPass?.value || '');
+      if (login(u, s)) location.reload();
+    };
+    if (btn) btn.onclick = doLogin;
+
+    // Enter no login
+    [inUser, inPass].forEach(el => {
+      if (!el) return;
+      el.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter'){
+          e.preventDefault();
+          doLogin();
+        }
+      });
+    });
     return false;
   }
   return true;
@@ -204,6 +218,15 @@ const btnRegistrarEquip = document.getElementById('btnRegistrarEquip');
 const alunoEmprestimo = document.getElementById('alunoEmprestimo');
 const equipEmprestimo = document.getElementById('equipEmprestimo');
 const devolucaoSelect = document.getElementById('devolucaoSelect');
+// Combos pesquisáveis (Pessoa / Equipamento / Empréstimo)
+const alunoEmprestimoList = document.getElementById('alunoEmprestimoList');
+const equipEmprestimoList = document.getElementById('equipEmprestimoList');
+const devolucaoSelectList = document.getElementById('devolucaoSelectList');
+
+const comboPessoa = setupCombo(alunoEmprestimo, alunoEmprestimoList);
+const comboEquip = setupCombo(equipEmprestimo, equipEmprestimoList);
+const comboDevolucao = setupCombo(devolucaoSelect, devolucaoSelectList);
+
 const statusDevolucao = document.getElementById('statusDevolucao');
 const notaDevolucao = document.getElementById('notaDevolucao');
 
@@ -304,6 +327,97 @@ function limparPesquisa(aba){
 }
 
 window.limparPesquisa = limparPesquisa;
+// ---------- Combos pesquisáveis (lista branca + digitação) ----------
+function setupCombo(inputEl, listEl){
+  if (!inputEl || !listEl) return null;
+
+  const state = { items: [], open: false, filtered: [] };
+
+  function close(){
+    state.open = false;
+    listEl.style.display = 'none';
+  }
+
+  function open(){
+    state.open = true;
+    listEl.style.display = 'block';
+  }
+
+  function render(items){
+    listEl.innerHTML = '';
+    const arr = items || [];
+    if (!arr.length){
+      const div = document.createElement('div');
+      div.className = 'combo-empty';
+      div.textContent = 'Nenhum resultado';
+      listEl.appendChild(div);
+      return;
+    }
+
+    arr.slice(0, 250).forEach(it => {
+      const div = document.createElement('div');
+      div.className = 'combo-item';
+      div.textContent = it.label;
+      div.dataset.value = it.value;
+      div.addEventListener('mousedown', (e) => {
+        e.preventDefault(); // evita blur antes do click
+        inputEl.value = it.label;
+        inputEl.dataset.value = it.value;
+        close();
+      });
+      listEl.appendChild(div);
+    });
+  }
+
+  function setItems(items){
+    state.items = Array.isArray(items) ? items : [];
+    filterAndRender(inputEl.value || '');
+  }
+
+  function filterAndRender(query){
+    const q = (query || '').toString().toLowerCase().trim();
+    const items = state.items.filter(it => it.label.toLowerCase().includes(q));
+    state.filtered = items;
+    render(items);
+    // abre se tiver foco
+    if (document.activeElement === inputEl) open();
+  }
+
+  inputEl.addEventListener('focus', () => {
+    // quando foca, mostra lista já filtrada
+    filterAndRender(inputEl.value || '');
+    open();
+  });
+
+  inputEl.addEventListener('input', () => {
+    // ao digitar, invalida seleção anterior e filtra
+    inputEl.dataset.value = '';
+    filterAndRender(inputEl.value || '');
+  });
+
+  inputEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape'){
+      close();
+      inputEl.blur();
+    }
+  });
+
+  // fecha ao clicar fora
+  document.addEventListener('mousedown', (e) => {
+    if (!state.open) return;
+    if (e.target === inputEl) return;
+    if (listEl.contains(e.target)) return;
+    close();
+  });
+
+  // se usuário sair do campo sem selecionar, mantém texto mas sem id
+  inputEl.addEventListener('blur', () => {
+    setTimeout(() => close(), 120);
+  });
+
+  return { setItems, close };
+}
+
 
 // Foto (opcional) capturada na devolução
 let fotoDevolucaoDataUrl = null;
@@ -581,34 +695,34 @@ function atualizarRemocoes(){
 }
 
 function atualizarSelects(){
-  // pessoas
-  alunoEmprestimo.innerHTML = '<option value="">Selecione a Pessoa</option>';
-  dados.pessoas
+  // Pessoas (combobox)
+  const pessoas = dados.pessoas
     .filter(p => (p.unidade || 'SEDE') === unidadeAtiva)
-    .forEach(p => {
-    alunoEmprestimo.innerHTML += `<option value="${p.id}">${esc(p.nome)} (${esc(p.funcao)})</option>`;
-  });
+    .map(p => ({ value: p.id, label: `${p.nome} (${p.funcao})` }));
 
-  // equipamentos (apenas com disponivel)
-  equipEmprestimo.innerHTML = '<option value="">Selecione o Equipamento</option>';
-  dados.equipamentos
+  if (comboPessoa) comboPessoa.setItems(pessoas);
+
+  // Equipamentos (apenas com disponível)
+  const equipamentos = dados.equipamentos
     .filter(e => (e.unidade || 'SEDE') === unidadeAtiva)
     .filter(e => Number(e.disponivel ?? 0) > 0)
-    .forEach(e => {
+    .map(e => {
       const total = Number(e.total ?? 0);
       const dan = Number(e.danificados ?? 0);
       const totalUtil = Math.max(0, total - dan);
-      equipEmprestimo.innerHTML += `<option value="${e.id}">${esc(e.nome)} - ${esc(e.patrimonio)} (${Number(e.disponivel ?? 0)}/${totalUtil})</option>`;
+      const disp = Number(e.disponivel ?? 0);
+      return { value: e.id, label: `${e.nome} - ${e.patrimonio} (${disp}/${totalUtil})` };
     });
 
-  // devoluções: apenas empréstimos em aberto
-  devolucaoSelect.innerHTML = '<option value="">Selecione o Empréstimo</option>';
-  dados.emprestimos
+  if (comboEquip) comboEquip.setItems(equipamentos);
+
+  // Devoluções (apenas empréstimos em aberto)
+  const devolucoes = dados.emprestimos
     .filter(e => (e.unidade || 'SEDE') === unidadeAtiva)
     .filter(e => e.status === 'Emprestado')
-    .forEach(e => {
-      devolucaoSelect.innerHTML += `<option value="${e.id}">${esc(e.alunoNome)} → ${esc(e.equipamentoNome)}</option>`;
-    });
+    .map(e => ({ value: e.id, label: `${e.alunoNome} → ${e.equipamentoNome}` }));
+
+  if (comboDevolucao) comboDevolucao.setItems(devolucoes);
 }
 
 function atualizarUsuarios(){
@@ -671,6 +785,16 @@ btnRegistrarPessoa.onclick = () => {
   nome.value = telefone.value = curso.value = '';
   funcao.value = '';
 
+  // limpa seleção
+  alunoEmprestimo.value = '';
+  alunoEmprestimo.dataset.value = '';
+  equipEmprestimo.value = '';
+  equipEmprestimo.dataset.value = '';
+
+  // limpa seleção
+  devolucaoSelect.value = '';
+  devolucaoSelect.dataset.value = '';
+
   salvar();
   atualizarTudo();
 };
@@ -706,8 +830,8 @@ btnRegistrarEquip.onclick = () => {
 
 // ---------- Empréstimo / Devolução ----------
 document.getElementById('btnEmprestar').onclick = () => {
-  const pessoa = dados.pessoas.find(p => p.id === alunoEmprestimo.value);
-  const equip = dados.equipamentos.find(e => e.id === equipEmprestimo.value);
+  const pessoa = dados.pessoas.find(p => p.id === (alunoEmprestimo.dataset.value || ''));
+  const equip = dados.equipamentos.find(e => e.id === (equipEmprestimo.dataset.value || ''));
 
   if (!pessoa || !equip) return alert('Selecione pessoa e equipamento.');
   if (equip.disponivel < 1) return alert('Equipamento indisponível.');
@@ -739,7 +863,7 @@ document.getElementById('btnEmprestar').onclick = () => {
 };
 
 document.getElementById('btnDevolver').onclick = () => {
-  const emp = dados.emprestimos.find(e => e.id === devolucaoSelect.value);
+  const emp = dados.emprestimos.find(e => e.id === (devolucaoSelect.dataset.value || ''));
   if (!emp) return alert('Selecione um empréstimo.');
 
   if (emp.status !== 'Emprestado') return alert('Este empréstimo já foi encerrado.');
@@ -1590,6 +1714,228 @@ if (btnResetSistemaAdmin){
     });
   };
 
+
+  // -------------------------
+  // Drawer de contas (troca rápida)
+  // -------------------------
+  const overlay = document.getElementById('accountDrawerOverlay');
+  const drawer = document.getElementById('accountDrawer');
+  const btnOpenDrawer = document.getElementById('btnAccountDrawer');
+  const btnCloseDrawer = document.getElementById('btnCloseAccountDrawer');
+  const drawerBtnLogout = document.getElementById('drawerBtnLogout');
+
+  const drawerUsuarioAtual = document.getElementById('drawerUsuarioAtual');
+  const drawerRoleAtual = document.getElementById('drawerRoleAtual');
+  const drawerUnidadeAtual = document.getElementById('drawerUnidadeAtual');
+
+  const listEl = document.getElementById('drawerAccountsList');
+  const addUserEl = document.getElementById('drawerAddUser');
+  const addPassEl = document.getElementById('drawerAddPass');
+  const rememberEl = document.getElementById('drawerRememberPass');
+  const btnAddAccount = document.getElementById('drawerBtnAddAccount');
+  const btnLoginAccount = document.getElementById('drawerBtnLoginAccount');
+
+  function getSavedAccounts(){
+    try{
+      const raw = localStorage.getItem('savedAccounts');
+      const arr = raw ? JSON.parse(raw) : [];
+      return Array.isArray(arr) ? arr : [];
+    }catch(e){ return []; }
+  }
+  function setSavedAccounts(arr){
+    localStorage.setItem('savedAccounts', JSON.stringify(arr || []));
+  }
+
+  function openAccountDrawer(){
+    if (!overlay || !drawer) return;
+    renderAccountDrawer();
+    overlay.style.display = 'block';
+    drawer.classList.add('open');
+    drawer.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeAccountDrawer(){
+    if (!overlay || !drawer) return;
+    drawer.classList.remove('open');
+    drawer.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+    setTimeout(() => {
+      if (!drawer.classList.contains('open')) overlay.style.display = 'none';
+    }, 180);
+  }
+
+  function badgeLetter(username){
+    const s = (username || '').trim();
+    return s ? s[0].toUpperCase() : '?';
+  }
+
+  function renderAccountDrawer(){
+    if (!drawerUsuarioAtual) return;
+
+    const sess = getSessao();
+    drawerUsuarioAtual.textContent = sess.usuario || '—';
+
+    if (drawerRoleAtual){
+      if (sess.role){
+        drawerRoleAtual.style.display = 'inline-flex';
+        drawerRoleAtual.textContent = (sess.role === 'admin') ? 'Admin' : 'Funcionário';
+      }else{
+        drawerRoleAtual.style.display = 'none';
+        drawerRoleAtual.textContent = '';
+      }
+    }
+
+    if (drawerUnidadeAtual){
+      drawerUnidadeAtual.textContent = unidadeAtiva || '—';
+    }
+
+    if (!listEl) return;
+    const accounts = getSavedAccounts();
+
+    if (accounts.length === 0){
+      listEl.innerHTML = `<div class="empty-state">Nenhuma conta salva ainda. Use “Adicionar conta”.</div>`;
+      return;
+    }
+
+    listEl.innerHTML = '';
+    accounts.forEach((acc, idx) => {
+      const user = acc.username || '';
+      const role = acc.role || '';
+      const hasPass = !!acc.password;
+
+      const item = document.createElement('div');
+      item.className = 'account-item';
+
+      item.innerHTML = `
+        <div class="account-top">
+          <div class="account-user">
+            <div class="account-badge">${badgeLetter(user)}</div>
+            <div class="account-meta">
+              <strong>${user || '—'}</strong>
+              <small>${role ? (role === 'admin' ? 'Admin' : 'Funcionário') : '—'}</small>
+            </div>
+          </div>
+          <button class="btn btn-ghost" type="button" data-act="remove" data-idx="${idx}">Remover</button>
+        </div>
+
+        ${hasPass ? '' : `
+          <div class="account-passline">
+            <input type="password" placeholder="Senha para entrar" data-pass-idx="${idx}" />
+          </div>
+        `}
+
+        <div class="account-actions">
+          <button class="btn" type="button" data-act="switch" data-idx="${idx}">Entrar</button>
+        </div>
+      `;
+
+      listEl.appendChild(item);
+    });
+
+    listEl.querySelectorAll('button[data-act="remove"]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const i = Number(btn.getAttribute('data-idx'));
+        const accounts = getSavedAccounts();
+        accounts.splice(i, 1);
+        setSavedAccounts(accounts);
+        renderAccountDrawer();
+      });
+    });
+
+    listEl.querySelectorAll('button[data-act="switch"]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const i = Number(btn.getAttribute('data-idx'));
+        const accounts = getSavedAccounts();
+        const acc = accounts[i];
+        if (!acc) return;
+
+        let pass = acc.password || '';
+        if (!pass){
+          const input = listEl.querySelector(`input[data-pass-idx="${i}"]`);
+          pass = input ? input.value : '';
+        }
+        if (!acc.username || !pass){
+          alert('Informe a senha para entrar nesta conta.');
+          return;
+        }
+
+        if (login(acc.username, pass)){
+          location.reload();
+        }
+      });
+    });
+  }
+
+  function addAccount(savePassword){
+    const u = (addUserEl?.value || '').trim();
+    const p = (addPassEl?.value || '');
+    if (!u || !p){
+      alert('Informe usuário e senha.');
+      return;
+    }
+    const uData = usuariosSistema.find(x => x.usuario === u && x.senha === p);
+    if (!uData){
+      alert('Usuário ou senha incorretos.');
+      return;
+    }
+
+    const accounts = getSavedAccounts();
+    const existingIdx = accounts.findIndex(a => a.username === u);
+
+    const entry = {
+      username: u,
+      role: uData.role || '',
+      password: savePassword ? p : ''
+    };
+
+    if (existingIdx >= 0) accounts[existingIdx] = entry;
+    else accounts.unshift(entry);
+
+    setSavedAccounts(accounts);
+
+    if (addUserEl) addUserEl.value = '';
+    if (addPassEl) addPassEl.value = '';
+    if (rememberEl) rememberEl.checked = false;
+
+    renderAccountDrawer();
+  }
+
+  function loginFromDrawer(){
+    const u = (addUserEl?.value || '').trim();
+    const p = (addPassEl?.value || '');
+    if (!u || !p){
+      alert('Informe usuário e senha.');
+      return;
+    }
+    if (login(u, p)) location.reload();
+  }
+
+  if (btnOpenDrawer) btnOpenDrawer.addEventListener('click', openAccountDrawer);
+  if (btnCloseDrawer) btnCloseDrawer.addEventListener('click', closeAccountDrawer);
+  if (overlay) overlay.addEventListener('click', closeAccountDrawer);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && drawer?.classList.contains('open')) closeAccountDrawer();
+  });
+
+  if (drawerBtnLogout) drawerBtnLogout.addEventListener('click', () => {
+    logout();
+    location.reload();
+  });
+
+  if (btnAddAccount) btnAddAccount.addEventListener('click', () => addAccount(!!rememberEl?.checked));
+  if (btnLoginAccount) btnLoginAccount.addEventListener('click', loginFromDrawer);
+
+  [addUserEl, addPassEl].forEach(el => {
+    if (!el) return;
+    el.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter'){
+        e.preventDefault();
+        loginFromDrawer();
+      }
+    });
+  });
+
+
   bindSearch(searchPessoas, 'pessoas');
   bindSearch(searchEquipamentos, 'equipamentos');
   bindSearch(searchEmprestimos, 'emprestimos');
@@ -1604,3 +1950,7 @@ if (btnResetSistemaAdmin){
     });
   }
 })();
+
+
+// Exibir usuário logado no header
+try{ mostrarUsuarioNoHeader(); }catch(e){}

@@ -473,3 +473,201 @@ table tr:nth-child(even){ background:#fafbff; }
     justify-content: stretch;
   }
 }
+
+
+/* --- Avatar / Drawer de contas --- */
+.user-avatar-btn{
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  border: 1px solid rgba(0,0,0,.12);
+  background: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(0,0,0,.08);
+}
+.user-avatar-btn:hover{ transform: translateY(-1px); }
+.user-avatar-btn:active{ transform: translateY(0); }
+.user-avatar-icon{ font-size: 18px; line-height: 1; }
+
+.drawer-overlay{
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.45);
+  z-index: 9998;
+}
+
+.drawer{
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  width: min(420px, 92vw);
+  background: #fff;
+  z-index: 9999;
+  box-shadow: -10px 0 30px rgba(0,0,0,.18);
+  transform: translateX(100%);
+  transition: transform .22s ease;
+  display: flex;
+  flex-direction: column;
+}
+.drawer.drawer-right{ right: 0; }
+.drawer.open{ transform: translateX(0); }
+
+.drawer-header{
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 16px 12px;
+  border-bottom: 1px solid rgba(0,0,0,.08);
+}
+.drawer-title h3{
+  margin: 0;
+  font-size: 18px;
+}
+.drawer-subtitle{
+  margin: 4px 0 0;
+  opacity: .75;
+  font-size: 13px;
+}
+.drawer-close{ min-width: 44px; height: 44px; }
+
+.drawer-content{
+  padding: 14px 16px 18px;
+  overflow: auto;
+}
+
+.drawer-section{ margin-bottom: 18px; }
+.drawer-section-title{
+  margin: 0 0 10px;
+  font-size: 13px;
+  letter-spacing: .3px;
+  text-transform: uppercase;
+  opacity: .8;
+}
+
+.current-user-card{
+  border: 1px solid rgba(0,0,0,.08);
+  border-radius: 14px;
+  padding: 12px;
+  background: rgba(0,0,0,.02);
+}
+.current-user-row{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 0;
+}
+.current-user-label{ opacity: .7; font-size: 13px; }
+.current-user-actions{ margin-top: 10px; display:flex; gap:10px; }
+.drawer-hint{ margin: 10px 0 0; font-size: 12px; opacity: .75; }
+
+.accounts-list{
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.account-item{
+  border: 1px solid rgba(0,0,0,.08);
+  border-radius: 14px;
+  padding: 10px;
+  display: grid;
+  gap: 10px;
+}
+.account-top{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.account-user{
+  display:flex;
+  gap: 10px;
+  align-items:center;
+}
+.account-badge{
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  background: rgba(0,0,0,.06);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight: 700;
+}
+.account-meta{
+  display:flex;
+  flex-direction:column;
+  line-height: 1.1;
+}
+.account-meta small{ opacity:.7; margin-top: 2px; }
+
+.account-actions{
+  display:flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.account-passline{
+  display:flex;
+  gap: 8px;
+  align-items:center;
+}
+.account-passline input{
+  flex: 1;
+  min-width: 140px;
+}
+
+.form-grid--1 .field input{ width: 100%; }
+.checkbox-line{
+  display:flex;
+  gap: 10px;
+  align-items: center;
+  font-size: 13px;
+  opacity: .9;
+}
+.drawer-actions{
+  display:flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 520px){
+  .user-avatar-btn{ box-shadow: 0 4px 12px rgba(0,0,0,.12); }
+}
+
+
+/* --- Usuário no header --- */
+.user-info{display:flex;align-items:center;gap:8px;}
+.user-name{color:#fff;font-weight:800;font-size:13px;white-space:nowrap;}
+
+
+
+/* --- Combobox pesquisável (lista branca) --- */
+.combo{ position:relative; width:100%; }
+.combo-input{ width:100%; }
+.combo-list{
+  position:absolute;
+  left:0; right:0;
+  top: calc(100% + 6px);
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:12px;
+  box-shadow: var(--shadow);
+  max-height: 240px;
+  overflow:auto;
+  z-index: 9999;
+}
+.combo-item{
+  padding:10px 12px;
+  cursor:pointer;
+  border-top:1px solid rgba(0,0,0,.04);
+}
+.combo-item:first-child{ border-top:none; }
+.combo-item:hover{ background: var(--surface-2); }
+.combo-empty{
+  padding:10px 12px;
+  color: var(--muted);
+}
