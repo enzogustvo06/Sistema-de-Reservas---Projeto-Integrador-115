@@ -46,6 +46,7 @@ function setUnidadeAtiva(id){
   unidadeAtiva = id;
   localStorage.setItem('unidadeAtiva', id);
   atualizarTudo();
+  try{ if (document.getElementById('accountDrawer')?.classList.contains('open')) renderAccountDrawer(); }catch(e){}
   atualizarUnidadeUI();
 }
 
@@ -70,15 +71,21 @@ function salvar(){
 
 // ---------- Usuários / Login ----------
 let usuariosSistema = JSON.parse(localStorage.getItem('usuariosSistema')) || [
-  { id: 'admin', usuario: 'admin', senha: '1234', role: 'admin' }
+  { id: 'admin', usuario: 'admin', senha: '1234', role: 'admin', unidade: 'ALL' }
 ];
 
 // migração: usuários antigos sem role -> funcionario
 usuariosSistema = usuariosSistema.map(u => ({ ...u, role: u.role || 'funcionario' }));
 
+// Unidade: usuários antigos sem unidade viram SEDE (admin vale para todas)
+usuariosSistema = usuariosSistema.map(u => {
+  if ((u.usuario === 'admin' || u.id === 'admin') || u.role === 'admin') return { ...u, unidade: 'ALL' };
+  return { ...u, unidade: u.unidade || 'SEDE' };
+});
+
 // garantia: admin padrão sempre existe e sempre é admin (evita "perder" permissão ao trocar de origem/servidor)
 if (!usuariosSistema.some(u => u.usuario === 'admin' || u.id === 'admin')){
-  usuariosSistema.push({ id: 'admin', usuario: 'admin', senha: '1234', role: 'admin' });
+  usuariosSistema.push({ id: 'admin', usuario: 'admin', senha: '1234', role: 'admin', unidade: 'ALL' });
 }
 usuariosSistema = usuariosSistema.map(u => (u.usuario === 'admin' || u.id === 'admin') ? { ...u, role: 'admin' } : u);
 function salvarUsuarios(){ localStorage.setItem('usuariosSistema', JSON.stringify(usuariosSistema)); }
@@ -94,8 +101,19 @@ function getSessao(){
 function isAdmin(){ return getSessao().role === 'admin'; }
 
 function login(usuario, senha){
+  // Admin entra em qualquer unidade. Funcionário entra apenas na unidade ativa.
   const u = usuariosSistema.find(x => x.usuario === usuario && x.senha === senha);
   if (!u){ alert('Usuário ou senha incorretos!'); return false; }
+
+  const uUn = (u.unidade || 'SEDE');
+  const pode = (u.role === 'admin' || uUn === 'ALL' || uUn === unidadeAtiva);
+
+  if (!pode){
+    const uniTxt = (unidadeAtiva === 'ANEXO2') ? 'Anexo II' : 'Sede';
+    alert('Este usuário pertence a outra unidade. Selecione a unidade correta: ' + uniTxt);
+    return false;
+  }
+
   localStorage.setItem('usuarioLogado', u.usuario);
   localStorage.setItem('usuarioRole', u.role);
   return true;
@@ -109,12 +127,14 @@ function logout(){
 
 function mostrarUsuarioNoHeader(){
   const nomeSpan = document.getElementById('usuarioLogadoNome');
+  const nomeSpanLeft = document.getElementById('usuarioLogadoNomeLeft');
   const { usuario, role } = getSessao();
   const label = document.getElementById('usuarioLogadoLabel');
   const roleLabel = document.getElementById('usuarioRoleLabel');
 
   if (label && usuario) label.textContent = 'Logado como: ' + usuario;
   if (nomeSpan) nomeSpan.textContent = usuario || '';
+  if (nomeSpanLeft) nomeSpanLeft.textContent = usuario || '';
 
   if (roleLabel && role){
     roleLabel.style.display = 'inline-block';
@@ -197,8 +217,8 @@ function migrarDados(){
   dados.pessoas = (dados.pessoas || []).map(garantirUnidade);
   dados.equipamentos = (dados.equipamentos || []).map(garantirUnidade);
   dados.emprestimos = (dados.emprestimos || []).map(garantirUnidade);
-  dados.danificados = (dados.danificados || []).filter(d => (d.unidade || 'SEDE') === unidadeAtiva).map(garantirUnidade);
-  dados.remocoes = (dados.remocoes || []).filter(r => (r.unidade || 'SEDE') === unidadeAtiva).map(garantirUnidade);
+  dados.danificados = (dados.danificados || []).map(garantirUnidade);
+  dados.remocoes = (dados.remocoes || []).map(garantirUnidade);
 
   salvar();
 }
@@ -730,7 +750,11 @@ function atualizarUsuarios(){
   tabelaUsuarios.innerHTML = '';
 
   usuariosSistema
-    .filter(u => matchAllFields(u, pesquisa.usuarios))
+    .filter(u => {
+      const un = (u.unidade || 'SEDE');
+      const visivel = (u.role === 'admin' || un === 'ALL' || un === unidadeAtiva);
+      return visivel && matchAllFields(u, pesquisa.usuarios);
+    })
     .forEach(u => {
     const tr = document.createElement('tr');
     const cargo = (u.role === 'admin') ? 'Admin' : 'Funcionário';
@@ -1605,7 +1629,7 @@ function criarUsuario(usuario, senha, role){
   if (!usuario || !senha) return alert('Preencha usuário e senha.');
   if (usuariosSistema.some(u => u.usuario === usuario)) return alert('Usuário já existe.');
 
-  usuariosSistema.push({ id: uuid(), usuario, senha, role });
+  usuariosSistema.push({ id: uuid(), usuario, senha, role, unidade: (role === 'admin' ? 'ALL' : unidadeAtiva) });
   salvarUsuarios();
   atualizarUsuarios();
 
@@ -1735,15 +1759,32 @@ if (btnResetSistemaAdmin){
   const btnAddAccount = document.getElementById('drawerBtnAddAccount');
   const btnLoginAccount = document.getElementById('drawerBtnLoginAccount');
 
+  function savedAccountsKey(){
+    return 'savedAccounts_' + (unidadeAtiva || 'SEDE');
+  }
+
+  function migrateSavedAccountsOnce(){
+    // Migração: versões antigas usavam a chave única 'savedAccounts'
+    const legacy = localStorage.getItem('savedAccounts');
+    if (!legacy) return;
+    const targetKey = 'savedAccounts_SEDE';
+    if (!localStorage.getItem(targetKey)){
+      localStorage.setItem(targetKey, legacy);
+    }
+    // Mantém a legacy para não perder dados, mas a partir daqui não usamos mais.
+  }
+
+  migrateSavedAccountsOnce();
+
   function getSavedAccounts(){
     try{
-      const raw = localStorage.getItem('savedAccounts');
+      const raw = localStorage.getItem(savedAccountsKey());
       const arr = raw ? JSON.parse(raw) : [];
       return Array.isArray(arr) ? arr : [];
     }catch(e){ return []; }
   }
   function setSavedAccounts(arr){
-    localStorage.setItem('savedAccounts', JSON.stringify(arr || []));
+    localStorage.setItem(savedAccountsKey(), JSON.stringify(arr || []));
   }
 
   function openAccountDrawer(){
@@ -1873,7 +1914,7 @@ if (btnResetSistemaAdmin){
       alert('Informe usuário e senha.');
       return;
     }
-    const uData = usuariosSistema.find(x => x.usuario === u && x.senha === p);
+    const uData = usuariosSistema.find(x => x.usuario === u && x.senha === p && (x.role === 'admin' || (x.unidade || 'SEDE') === unidadeAtiva || (x.unidade || '') === 'ALL'));
     if (!uData){
       alert('Usuário ou senha incorretos.');
       return;

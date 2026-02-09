@@ -671,3 +671,34 @@ table tr:nth-child(even){ background:#fafbff; }
   padding:10px 12px;
   color: var(--muted);
 }
+
+
+/* Usuário logado (ao lado da logo) */
+.header-logged{
+  display:flex;
+  align-items:baseline;
+  gap:8px;
+  padding:6px 10px;
+  border:1px solid rgba(255,255,255,.25);
+  border-radius:999px;
+  background:rgba(255,255,255,.10);
+}
+.header-logged-label{
+  font-size:12px;
+  opacity:.9;
+  font-weight:700;
+}
+.header-logged-name{
+  font-size:12px;
+  font-weight:900;
+  white-space:nowrap;
+}
+@media (max-width: 720px){
+  .header-logged{ display:none; }
+}
+
+
+/* Nome do usuário ao lado do ícone */
+.user-name{ display:flex; align-items:center; gap:6px; }
+.user-name-label{ color: var(--muted, #6b7280); font-size: 12px; }
+.user-name-value{ font-weight: 600; }
